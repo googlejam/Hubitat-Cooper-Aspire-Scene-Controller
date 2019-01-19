@@ -1,6 +1,5 @@
 /**
- *  Copyright 2015 SmartThings
- *https://graph-na02-useast1.api.smartthings.com/ide/device/editor/93342121-e596-4896-ac33-49d9553cfee6#
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
@@ -9,28 +8,19 @@
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
- *  Version .14 Added Indicator control commands
- *  Version .15 Updated Instructions
- *  Version .16 Changed levels from 0-100 to 0-99
- *  Version .17 Changed indicator attributes from "On" and "Off" to "on" and "off" to consistent with a switch
- *  Version .18 Added all indicator set command
- *  Version .19 Added buttonpush state to prevent indicator set and toggle commands from triggering a button event.
  *
  */
 metadata {
 	definition (name: "Cooper Aspire Scene Controller RFWC5 RFWC5D", namespace: "saains", author: "Scott Ainsworth") {
 		capability "Actuator"
-        capability "PushableButton"
-        capability "Configuration"
-        capability "Sensor"
+		capability "PushableButton"
+		capability "Configuration"
+		capability "Sensor"
         //capability "Switch"
         //capability "switchLevel"
         
-		command "IndToggle"
-        command "IndicatorSet" , ["number", "number"] //Inumber, OnorOff
-        command "IndicatorAllSet", ["number"] //IndValue
-        command "CheckIndicators" //use to poll the indicator status
-        command "initialize"
+		command "CheckIndicators" //use to poll the indicator status
+		command "initialize"
 		command "Indicator1On"
 		command "Indicator1Off"
 		command "Indicator2On"
@@ -41,7 +31,6 @@ metadata {
 		command "Indicator4Off"
 		command "Indicator5On"
 		command "Indicator5Off"
-
         
         attribute "currentButton", "STRING"
         attribute "numberOfButtons", "number"
@@ -52,70 +41,10 @@ metadata {
         attribute "Indicator5","enum",  ["on", "off"]
         attribute "IndDisplay", "STRING"
         
-		// zw:L type:0202 mfr:001A prod:574D model:0000 ver:1.13 zwv:2.78 lib:01 cc:87,77,86,22,2D,85,72,21,70
-		//Controller Replication-21;
-        //Application Status-22;
-        //Switch Multilevel	0x26
-        //Scene Controller Conf-2D;
-        //Scene Activation-2B
-        //Configuration-70;
-        //Manufacturer Specific-72;
-        //Node Naming-77; 
-        //Association-85;
-        //Version-86;
-		//indicator-87;
-        // Hail-82????????       
-        
 		fingerprint type: "0202", mfr: "001A", prod: "574D", model: "0000",  cc:"87,77,86,22,2D,85,72,21,70" 
-	}
+	}	
     
     preferences {
-		input (
-			type: "paragraph",
-			element: "paragraph",
-			title: "Configure Scenes",
-			description: "The Cooper controller can control devices via scenes and/or via association.  Scene capable devices are those which report 2B,2C in the Raw Description. Scene capable devices must have scenes locally configured. Scenes 251-255 are reserved to configure buttons not assigned another scene#. Entries for associated devices must be followed by a level setting. On off devices use 0 or 255, dimable devices use 0 to 99. You must press the configure tile to activate the configuration.  It will take a few minutes complete"
-		)
-		section {
-			input "sceneNum1", "number", title: "Button 1 scene ID (1-250)", required: false
-			input "dimdur1", "number", title: "Button 1 scene dimming duration (0-60) seconds", required: false
-			input "sceneCap1", "text", title: "Button 1 Scene Capable Device IDs example (A3, 12, 25)", required: false
-			input "assocCap1", "text", title: "Button 1 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-		section {
-			input "sceneNum2", "number", title: "Button 2 scene ID (1-250)", required: false
-			input "dimdur2", "number", title: "Button 2 scene dimming duration (0-60) seconds", required: false
-			input "sceneCap2", "text", title: "Button 2 Scene Capable Devices example (A3,12, 25)", required: false
-			input "assocCap2", "text", title: "Button 2 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-		section {
-			input "sceneNum3", "number", title: "Button 3 scene ID (1-250)", required: false
-			input "dimdur3", "number", title: "Button 3 scene dimming duration (0-60) seconds", required: false
-			input "sceneCap3", "text", title: "Button 3 Scene Capable Devices example (A3, 12, 25)", required: false
-			input "assocCap3", "text", title: "Button 3 Devices via association,Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-		section {
-			input "sceneNum4", "number", title: "Button 4 scene ID (1-250)", required: false
-			input "dimdur4", "number", title: "Button 4 scene dimming duration (0-60) seconds", required: false
-			input "sceneCap4", "text", title: "Button 4 Scene Capable Devices example (A3, 12, 25)", required: false
-			input "assocCap4", "text", title: "Button 4 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-		section {
-			input "sceneNum5", "number", title: "Button 5 scene ID (1-250)", required: false
-			input "dimdur5", "number", title: "Button 5 scene dimming duration (0-60) seconds", required: false
-			input "sceneCap5", "text", title: "Button 5 Scene Capable Devices example (A3, 12, 25)", required: false
-			input "assocCap5", "text", title: "Button 5 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-	}
-
-	simulator {
-	}
-
-	tiles (scale: 2){
-		standardTile("Indicators", "device.IndDisplay", width: 6, height: 4) {
-			state '${currentValue}',label:'${currentValue}', icon: "st.unknown.zwave.static-controller", backgroundColor:"#ffffff"
-		} 
-        standardTile("configure", "device.configure",width: 6, height:2, inactiveLabel: false, decoration:"flat") {
-			state "off", label:"Configure Scenes", action:"configure"
-		}
-
-		main "Indicators"
-		details(["Indicators", "configure"])
 	}
 }
 
@@ -125,10 +54,10 @@ def parse(String description) {
 	
 	def cmd = zwave.parse(description)
 	if (cmd) {
-			result = zwaveEvent(cmd)
-			log.debug "Parsed ${cmd} to ${result.inspect()}"
+		result = zwaveEvent(cmd)
+		log.debug "Parsed ${cmd} to ${result.inspect()}"
 	} else {
-			log.debug "Non-parsed event: ${description}"
+		log.debug "Non-parsed event: ${description}"
 	}
 	
 	result
@@ -281,8 +210,7 @@ def configure() {
 
 
 // Parse the user input and create commands to set up the controller -- called from config
-def buttoncmds(btn, scene, scenelist, assoclist, dimdur)
-{ 
+def buttoncmds(btn, scene, scenelist, assoclist, dimdur) { 
 	def cmds = []
 	def lList = 0
 	def alist = []
@@ -406,19 +334,8 @@ def Indicator5Off() {
 }
 
 
-def IndToggle(Inumber){
-	def ibit = 2**(Inumber-1)
-	def Onoff = state.lastindval ^ ibit
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
-	
-	delayBetween([
-		zwave.indicatorV1.indicatorSet(value: Onoff).format(),
-		zwave.indicatorV1.indicatorGet().format(),
-	],500)
-}
-
 // because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
-def IndicatorSet(Inumber, OnorOff){
+def IndicatorSet(Inumber, OnorOff) {
 	def Onoff = 0
 	def ibit = 2**(Inumber-1)
 
@@ -437,26 +354,12 @@ def IndicatorSet(Inumber, OnorOff){
 		],300)
 	} 
 	else {
-		log.debug "$device.id Indidcator set out of range"
+		log.debug "$device.id Indicator set out of range"
 	}
 }
 
 
-def IndicatorAllSet(IndValue) {
-	if (IndValue <=31){
-		state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
-		delayBetween([
-			zwave.indicatorV1.indicatorSet(value: IndValue).format(),
-			zwave.indicatorV1.indicatorGet().format(),
-		],300)
-	} 
-	else {
-		log.debug "$device.id Indidcator set out of range"
-	}
-}
-
-
-def CheckIndicators(){
+def CheckIndicators() {
 	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
 	
 	delayBetween([
@@ -514,11 +417,3 @@ def AssocNodes(txtlist,group,hub) {
 }
 
 
-// convert a hex string to integer
-def integerhex(String v) {
-	if (v == null) {
-    	return 0
-    }
-    
-	return v.split(',').collect { Integer.parseInt(it, 16) }
-}
