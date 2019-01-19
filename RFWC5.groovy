@@ -42,9 +42,6 @@ metadata {
 		command "Indicator5On"
 		command "Indicator5Off"
 
-
-
-
         
         attribute "currentButton", "STRING"
         attribute "numberOfButtons", "number"
@@ -67,48 +64,46 @@ metadata {
         //Association-85;
         //Version-86;
 		//indicator-87;
-        // Hail-82????????
-       
+        // Hail-82????????       
         
 		fingerprint type: "0202", mfr: "001A", prod: "574D", model: "0000",  cc:"87,77,86,22,2D,85,72,21,70" 
 	}
     
     preferences {
-                input (
-                type: "paragraph",
-                element: "paragraph",
-                title: "Configure Scenes",
-                description: "The Cooper controller can control devices via scenes and/or via association.  Scene capable devices are those which report 2B,2C in the Raw Description. Scene capable devices must have scenes locally configured. Scenes 251-255 are reserved to configure buttons not assigned another scene#. Entries for associated devices must be followed by a level setting. On off devices use 0 or 255, dimable devices use 0 to 99. You must press the configure tile to activate the configuration.  It will take a few minutes complete"
-            )
-    section {
-    	input "sceneNum1", "number", title: "Button 1 scene ID (1-250)", required: false
-        input "dimdur1", "number", title: "Button 1 scene dimming duration (0-60) seconds", required: false
-		input "sceneCap1", "text", title: "Button 1 Scene Capable Device IDs example (A3, 12, 25)", required: false
-        input "assocCap1", "text", title: "Button 1 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-    section {
-    	input "sceneNum2", "number", title: "Button 2 scene ID (1-250)", required: false
-        input "dimdur2", "number", title: "Button 2 scene dimming duration (0-60) seconds", required: false
-		input "sceneCap2", "text", title: "Button 2 Scene Capable Devices example (A3,12, 25)", required: false
-        input "assocCap2", "text", title: "Button 2 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-    section {
-    	input "sceneNum3", "number", title: "Button 3 scene ID (1-250)", required: false
-        input "dimdur3", "number", title: "Button 3 scene dimming duration (0-60) seconds", required: false
-		input "sceneCap3", "text", title: "Button 3 Scene Capable Devices example (A3, 12, 25)", required: false
-        input "assocCap3", "text", title: "Button 3 Devices via association,Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-    section {
-    	input "sceneNum4", "number", title: "Button 4 scene ID (1-250)", required: false
-        input "dimdur4", "number", title: "Button 4 scene dimming duration (0-60) seconds", required: false
-		input "sceneCap4", "text", title: "Button 4 Scene Capable Devices example (A3, 12, 25)", required: false
-        input "assocCap4", "text", title: "Button 4 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-    section {
-    	input "sceneNum5", "number", title: "Button 5 scene ID (1-250)", required: false
-        input "dimdur5", "number", title: "Button 5 scene dimming duration (0-60) seconds", required: false
-		input "sceneCap5", "text", title: "Button 5 Scene Capable Devices example (A3, 12, 25)", required: false
-        input "assocCap5", "text", title: "Button 5 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
-     }
+		input (
+			type: "paragraph",
+			element: "paragraph",
+			title: "Configure Scenes",
+			description: "The Cooper controller can control devices via scenes and/or via association.  Scene capable devices are those which report 2B,2C in the Raw Description. Scene capable devices must have scenes locally configured. Scenes 251-255 are reserved to configure buttons not assigned another scene#. Entries for associated devices must be followed by a level setting. On off devices use 0 or 255, dimable devices use 0 to 99. You must press the configure tile to activate the configuration.  It will take a few minutes complete"
+		)
+		section {
+			input "sceneNum1", "number", title: "Button 1 scene ID (1-250)", required: false
+			input "dimdur1", "number", title: "Button 1 scene dimming duration (0-60) seconds", required: false
+			input "sceneCap1", "text", title: "Button 1 Scene Capable Device IDs example (A3, 12, 25)", required: false
+			input "assocCap1", "text", title: "Button 1 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
+		section {
+			input "sceneNum2", "number", title: "Button 2 scene ID (1-250)", required: false
+			input "dimdur2", "number", title: "Button 2 scene dimming duration (0-60) seconds", required: false
+			input "sceneCap2", "text", title: "Button 2 Scene Capable Devices example (A3,12, 25)", required: false
+			input "assocCap2", "text", title: "Button 2 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
+		section {
+			input "sceneNum3", "number", title: "Button 3 scene ID (1-250)", required: false
+			input "dimdur3", "number", title: "Button 3 scene dimming duration (0-60) seconds", required: false
+			input "sceneCap3", "text", title: "Button 3 Scene Capable Devices example (A3, 12, 25)", required: false
+			input "assocCap3", "text", title: "Button 3 Devices via association,Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
+		section {
+			input "sceneNum4", "number", title: "Button 4 scene ID (1-250)", required: false
+			input "dimdur4", "number", title: "Button 4 scene dimming duration (0-60) seconds", required: false
+			input "sceneCap4", "text", title: "Button 4 Scene Capable Devices example (A3, 12, 25)", required: false
+			input "assocCap4", "text", title: "Button 4 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
+		section {
+			input "sceneNum5", "number", title: "Button 5 scene ID (1-250)", required: false
+			input "dimdur5", "number", title: "Button 5 scene dimming duration (0-60) seconds", required: false
+			input "sceneCap5", "text", title: "Button 5 Scene Capable Devices example (A3, 12, 25)", required: false
+			input "assocCap5", "text", title: "Button 5 Devices via association, Device ID followed by level(0,1-99,255) example(03, 99, 0E, 255)", required: false}
+	}
 
 	simulator {
-
 	}
 
 	tiles (scale: 2){
@@ -126,28 +121,27 @@ metadata {
 
 
 def parse(String description) {
-        def result = null
-        def cmd = zwave.parse(description)
-        if (cmd) {
-                result = zwaveEvent(cmd)
-                log.debug "Parsed ${cmd} to ${result.inspect()}"
-        } else {
-                log.debug "Non-parsed event: ${description}"
-        }
-        result
+	def result = null
+	
+	def cmd = zwave.parse(description)
+	if (cmd) {
+			result = zwaveEvent(cmd)
+			log.debug "Parsed ${cmd} to ${result.inspect()}"
+	} else {
+			log.debug "Non-parsed event: ${description}"
+	}
+	
+	result
 }
 
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     def result = []
     def cmds = []
-    //result << createEvent(descriptionText: "${device.displayName} Button Action")
-    state.buttonpush = 1
+
+	state.buttonpush = 1
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
-    //log.debug "$result"
-	
-	//sendEvent(name: "push", value: 1)
 	
     result
 }
@@ -156,12 +150,12 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
 def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
     def result = []
     def cmds = []
-    //result << createEvent(descriptionText: "${device.displayName} Button Action")
+	
     state.buttonpush = 1
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
-    //log.debug "$result"
-    result
+
+	result
 }
 
  
@@ -175,51 +169,54 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
     def ino = 0
     def ibit = 0
     def istring = ""
+	
     indval = cmd.value
-    if(state.lastindval  == indval &&(now() -state.repeatStart <2000 )){  // test to see if it is actually a change.  The controller sends double commands by design. 
-      //log.debug "skipping and repeat"
-     createEvent([:])
+	
+    if (state.lastindval  == indval &&(now() -state.repeatStart <2000 )) {  // test to see if it is actually a change.  The controller sends double commands by design. 
+    	//log.debug "skipping and repeat"
+    	createEvent([:])
     }
-    else{
+    else {
+		istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
+		event = createEvent(name: "IndDisplay", value: "$istring", descriptionText: "Indicators: $istring", linkText: "device.label Indicators: $istring")
+		events << event
 
-    istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
-    event = createEvent(name: "IndDisplay", value: "$istring", descriptionText: "Indicators: $istring", linkText: "device.label Indicators: $istring")
-    events << event
-    
-	for (i in 0..4) {
-    	ibit = 2**i
-    	ino = i + 1
-    	onoff = indval & ibit
-		offOffset = 0
-		
-    	priorOnoff = state.lastindval & ibit
-        //log.debug "$ino is $onoff , piorOnoff is:$priorOnoff ibit is $ibit"
-        if (onoff != priorOnoff){
-        	//log.debug "$ino first if true"
-            if (onoff) { //log.debug "$ino second if true"
-               event = createEvent(name: "Indicator$ino", value: "on", descriptionText: "$device.label Indicator:$ino on", linkText: "$device.label Indicator:$ino on")
-            } else { //log.debug "$ino second if false"
-                event = createEvent(name: "Indicator$ino", value: "off", descriptionText: "$device.label Indicator:$ino off", linkText: "$device.label Indicator:$ino off")
-            }
-        	events << event
-			if (state.buttonpush == 1){
-				log.debug "JOEL PUSHED $ino , $onoff"
-				
-				if (onoff == 0) {
-					offOffset = 5
+		for (i in 0..4) {
+			ibit = 2**i
+			ino = i + 1
+			onoff = indval & ibit
+			offOffset = 0
+
+			priorOnoff = state.lastindval & ibit
+			//log.debug "$ino is $onoff , piorOnoff is:$priorOnoff ibit is $ibit"
+			
+			if (onoff != priorOnoff){
+				//log.debug "$ino first if true"
+				if (onoff) { //log.debug "$ino second if true"
+				   event = createEvent(name: "Indicator$ino", value: "on", descriptionText: "$device.label Indicator:$ino on", linkText: "$device.label Indicator:$ino on")
+				} else { //log.debug "$ino second if false"
+					event = createEvent(name: "Indicator$ino", value: "off", descriptionText: "$device.label Indicator:$ino off", linkText: "$device.label Indicator:$ino off")
 				}
-				
-				event2 = createEvent(name:"pushed",value: (ino + offOffset),descriptionText:"$device.displayName button $ino pushed",linkText:"$device.label Button:$ino pushed",isStateChange: true)
-				events << event2
-			}
-        } //else { log.debug "$ino first if false"}
-    }
-    state.lastindval = indval
-    state.repeatStart = now()
-    
-   events
-  }
+				events << event
+				if (state.buttonpush == 1){
+					//log.debug "PUSHED $ino , $onoff"
+
+					if (onoff == 0) {
+						offOffset = 5
+					}
+
+					event2 = createEvent(name:"pushed",value: (ino + offOffset),descriptionText:"$device.displayName button $ino pushed",linkText:"$device.label Button:$ino pushed",isStateChange: true)
+					events << event2
+				}
+			} //else { log.debug "$ino first if false"}
+		}
+		state.lastindval = indval
+		state.repeatStart = now()
+
+		events
+	}
 }
+
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
 	def event = [isStateChange: true]
@@ -229,9 +226,8 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 }
 
 
-
 def configure() {
-  log.debug("executing configure hub id is: $zwaveHubNodeId")
+	log.debug("executing configure hub id is: $zwaveHubNodeId")
     def cmds = []
     
     //the buttons on the controller will not work with out a scene load in.  Use 251-255 if no scene number is specified in the preferences
@@ -240,7 +236,6 @@ def configure() {
     def s3 = 253
     def s4 = 254
     def s5 = 255
-
     
     if (sceneNum1) s1 = sceneNum1
     if (sceneNum2) s2 = sceneNum2
@@ -253,8 +248,7 @@ def configure() {
     def d2 = 0x00
     def d3 = 0x00
     def d4 = 0x00
-    def d5 = 0x00
-   
+    def d5 = 0x00   
 
     if (dimdur1) d1=dimdur1 else d1 = 0x00
     if (dimdur2) d2=dimdur2 else d2 = 0x00
@@ -262,214 +256,234 @@ def configure() {
     if (dimdur4) d4=dimdur4 else d4 = 0x00
     if (dimdur5) d5=dimdur5 else d5 = 0x00
     
-//for each button group create a sub to run for each button
-cmds += buttoncmds(1, s1, sceneCap1, assocCap1, d1)
-cmds << zwave.associationV1.associationGet(groupingIdentifier:1).format()
-cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:1).format()
-cmds += buttoncmds(2, s2, sceneCap2, assocCap2, d2)
-cmds << zwave.associationV1.associationGet(groupingIdentifier:2).format()
-cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:2).format()
-cmds += buttoncmds(3, s3, sceneCap3, assocCap3, d3)
-cmds << zwave.associationV1.associationGet(groupingIdentifier:3).format()
-cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:3).format()
-cmds += buttoncmds(4, s4, sceneCap4, assocCap4, d4)
-cmds << zwave.associationV1.associationGet(groupingIdentifier:4).format()
-cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:4).format()
-cmds += buttoncmds(5, s5, sceneCap5, assocCap5, d5)
-cmds << zwave.associationV1.associationGet(groupingIdentifier:5).format()
-cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:5).format()
+	//for each button group create a sub to run for each button
+	cmds += buttoncmds(1, s1, sceneCap1, assocCap1, d1)
+	cmds << zwave.associationV1.associationGet(groupingIdentifier:1).format()
+	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:1).format()
+	cmds += buttoncmds(2, s2, sceneCap2, assocCap2, d2)
+	cmds << zwave.associationV1.associationGet(groupingIdentifier:2).format()
+	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:2).format()
+	cmds += buttoncmds(3, s3, sceneCap3, assocCap3, d3)
+	cmds << zwave.associationV1.associationGet(groupingIdentifier:3).format()
+	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:3).format()
+	cmds += buttoncmds(4, s4, sceneCap4, assocCap4, d4)
+	cmds << zwave.associationV1.associationGet(groupingIdentifier:4).format()
+	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:4).format()
+	cmds += buttoncmds(5, s5, sceneCap5, assocCap5, d5)
+	cmds << zwave.associationV1.associationGet(groupingIdentifier:5).format()
+	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:5).format()
 
-// send commands
-log.debug "$cmds"
-log.debug "Please Wait this can take a few minutes"
-delayBetween(cmds,3500)
+	// send commands
+	log.debug "$cmds"
+	log.debug "Please Wait this can take a few minutes"
+	delayBetween(cmds,3500)
 }
 
 
 // Parse the user input and create commands to set up the controller -- called from config
 def buttoncmds(btn, scene, scenelist, assoclist, dimdur)
 { 
-def cmds = []
-def lList = 0
-def alist = []
-def alists = []
-def atlist = []
-def amap = [level:0, anodes: []]
+	def cmds = []
+	def lList = 0
+	def alist = []
+	def alists = []
+	def atlist = []
+	def amap = [level:0, anodes: []]
 
-//log.debug "assoclist is:$assoclist"
+	//log.debug "assoclist is:$assoclist"
 
-//add clear associaton cmd to the list
-cmds << zwave.associationV1.associationRemove(groupingIdentifier: btn, nodeId:[]).format()
+	//add clear associaton cmd to the list
+	cmds << zwave.associationV1.associationRemove(groupingIdentifier: btn, nodeId:[]).format()
 
-// add the levels to the data structure.
-if (assoclist) {
-	atlist = assoclist.tokenize(', ')
-    // log.debug "atlist is: $atlist"
-	lList = atlist.size()
-	for (int i = 1; i <= lList; i+=2) {
-		if(alist.every { it != atlist[i]}) {	alist << atlist[i] } // if the value is not in alist then add it.
+	// add the levels to the data structure.
+	if (assoclist) {
+		atlist = assoclist.tokenize(', ')
+		
+		// log.debug "atlist is: $atlist"
+		
+		lList = atlist.size()
+		for (int i = 1; i <= lList; i+=2) {
+			if(alist.every { it != atlist[i]}) {	alist << atlist[i] } // if the value is not in alist then add it.
+		}
+		alist.each{amap = [level: it, anodes: []]      //add the levels to the data structure
+			alists << amap  //build the matrix
+		}
+
+		// fill the matrix with nodes ordered with levels            log.debug "afterif alists:$alists  i is:$i x is:$x"
+		for (int i = 1; i <= lList; i+=2) {
+			for (int x = 0; x < alist.size(); x++){
+				def bob = alists[x]
+				if (bob.level == atlist[i]) {bob.anodes << atlist[i-1]}
+			}
+		}
+    	// log.debug "alists is now: $alists"
 	}
-	alist.each{amap = [level: it, anodes: []]      //add the levels to the data structure
-		alists << amap  //build the matrix
-    }
- 
-// fill the matrix with nodes ordered with levels            log.debug "afterif alists:$alists  i is:$i x is:$x"
-    for (int i = 1; i <= lList; i+=2) {
-    	for (int x = 0; x < alist.size(); x++){
-            def bob = alists[x]
-            if (bob.level == atlist[i]) {bob.anodes << atlist[i-1]}
-            }
-       }
-     // log.debug "alists is now: $alists"
-   }
-// for each list of ids
-// <<create association set commands
-// <<create configuration set commands
-	for (int i = 0; i <=alists.size(); i++){
-   
-    def thisset = alists[i]
-    def nodestring = ""
-    def thislevel = [0x32]
-    //log.debug "alists $i is $thisset"
-    if (thisset){
-    	def alevel = thisset.level as int
-    	nodestring = thisset.anodes.join(", ")
-        //log.debug "nodestring is: $nodestring"
-        //log.debug "xxxx $thisset.level.value"f
-        if (alevel <= 99 && alevel >= 0){        	
-    		thislevel[0] = thisset.level as int
-            
-            }
-        if (alevel == 255){
-        	thislevel[0] = thisset.level as int
-            }
-    	//log.debug "thislevel $i is $thislevel"
-    	}
-    cmds << AssocNodes(nodestring,btn,0)
-    	log.debug "setting configuration commands for button:$btn Level:$thislevel"        
-    cmds << zwave.configurationV1.configurationSet(parameterNumber:btn, size:1, configurationValue: thislevel).format()
+	
+	// for each list of ids
+	// <<create association set commands
+	// <<create configuration set commands
+	
+	for (int i = 0; i <=alists.size(); i++) {   
+		def thisset = alists[i]
+		def nodestring = ""
+		def thislevel = [0x32]
+		//log.debug "alists $i is $thisset"
+
+		if (thisset) {
+			def alevel = thisset.level as int
+			nodestring = thisset.anodes.join(", ")
+			//log.debug "nodestring is: $nodestring"
+			//log.debug "xxxx $thisset.level.value"f
+			if (alevel <= 99 && alevel >= 0){        	
+				thislevel[0] = thisset.level as int
+
+				}
+			if (alevel == 255){
+				thislevel[0] = thisset.level as int
+				}
+			//log.debug "thislevel $i is $thislevel"
+		}
+		cmds << AssocNodes(nodestring,btn,0)
+		log.debug "setting configuration commands for button:$btn Level:$thislevel"        
+		cmds << zwave.configurationV1.configurationSet(parameterNumber:btn, size:1, configurationValue: thislevel).format()
 	}
-// <<scene set commands
-// <<create association set commands for scenes
 
-cmds << zwave.sceneControllerConfV1.sceneControllerConfSet(groupId:btn, sceneId:scene, dimmingDuration:dimdur).format()
-log.debug "setting scene commands for button:$btn scene:$scene dimmingduration:$dimdur"
-cmds << AssocNodes(scenelist, btn, 1)
+	cmds << zwave.sceneControllerConfV1.sceneControllerConfSet(groupId:btn, sceneId:scene, dimmingDuration:dimdur).format()
+	log.debug "setting scene commands for button:$btn scene:$scene dimmingduration:$dimdur"
+	cmds << AssocNodes(scenelist, btn, 1)
 
-return (cmds)
+	return (cmds)
 }
+
 
 def Indicator1On() {
-IndicatorSet(1, 1)	
+	IndicatorSet(1, 1)	
 }
+
 
 def Indicator1Off() {
-IndicatorSet(1, 0)	
+	IndicatorSet(1, 0)	
 }
+
 
 def Indicator2On() {
-IndicatorSet(2, 1)	
+	IndicatorSet(2, 1)	
 }
+
 
 def Indicator2Off() {
-IndicatorSet(2, 0)	
+	IndicatorSet(2, 0)	
 }
+
 
 def Indicator3On() {
-IndicatorSet(3, 1)	
+	IndicatorSet(3, 1)	
 }
+
 
 def Indicator3Off() {
-IndicatorSet(3, 0)	
+	IndicatorSet(3, 0)	
 }
+
 
 def Indicator4On() {
-IndicatorSet(4, 1)	
+	IndicatorSet(4, 1)	
 }
+
 
 def Indicator4Off() {
-IndicatorSet(4, 0)	
+	IndicatorSet(4, 0)	
 }
+
 
 def Indicator5On() {
-IndicatorSet(5, 1)	
+	IndicatorSet(5, 1)	
 }
 
+
 def Indicator5Off() {
-IndicatorSet(5, 0)	
+	IndicatorSet(5, 0)	
 }
 
 
 def IndToggle(Inumber){
-def ibit = 2**(Inumber-1)
-def Onoff = state.lastindval ^ ibit
+	def ibit = 2**(Inumber-1)
+	def Onoff = state.lastindval ^ ibit
 	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+	
 	delayBetween([
-    zwave.indicatorV1.indicatorSet(value: Onoff).format(),
-    zwave.indicatorV1.indicatorGet().format(),
-    ],500)
+		zwave.indicatorV1.indicatorSet(value: Onoff).format(),
+		zwave.indicatorV1.indicatorGet().format(),
+	],500)
 }
 
 // because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
 def IndicatorSet(Inumber, OnorOff){
-def Onoff = 0
-def ibit = 2**(Inumber-1)
+	def Onoff = 0
+	def ibit = 2**(Inumber-1)
 
-if (Inumber >=1 && Inumber <=5){
-	if (OnorOff == "On" || OnorOff ==1){
-		Onoff = state.lastindval | ibit
-    	//log.debug "this is $ibit Onoff on: $Onoff lastindval is: $state.lastindval"
-		} else {
-		Onoff = state.lastindval & ~ibit
-   		//log.debug "this is $ibit Onoff off: $Onoff lastindval is: $state.lastindval"
-    	}
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
-	delayBetween([
-    zwave.indicatorV1.indicatorSet(value: Onoff).format(),
-    zwave.indicatorV1.indicatorGet().format(),
-    ],300)
-    
-} else {log.debug "$device.id Indidcator set out of range"}
+	if (Inumber >=1 && Inumber <=5) {
+		if (OnorOff == "On" || OnorOff ==1){
+			Onoff = state.lastindval | ibit
+			//log.debug "this is $ibit Onoff on: $Onoff lastindval is: $state.lastindval"
+			} else {
+			Onoff = state.lastindval & ~ibit
+			//log.debug "this is $ibit Onoff off: $Onoff lastindval is: $state.lastindval"
+			}
+		state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+		delayBetween([
+			zwave.indicatorV1.indicatorSet(value: Onoff).format(),
+			zwave.indicatorV1.indicatorGet().format(),
+		],300)
+	} 
+	else {
+		log.debug "$device.id Indidcator set out of range"
+	}
 }
 
-def IndicatorAllSet(IndValue){
 
-if (IndValue <=31){
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
-	delayBetween([
-    zwave.indicatorV1.indicatorSet(value: IndValue).format(),
-    zwave.indicatorV1.indicatorGet().format(),
-    ],300)
-    
-} else {log.debug "$device.id Indidcator set out of range"}
+def IndicatorAllSet(IndValue) {
+	if (IndValue <=31){
+		state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+		delayBetween([
+			zwave.indicatorV1.indicatorSet(value: IndValue).format(),
+			zwave.indicatorV1.indicatorGet().format(),
+		],300)
+	} 
+	else {
+		log.debug "$device.id Indidcator set out of range"
+	}
 }
 
 
 def CheckIndicators(){
 	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+	
 	delayBetween([
-	zwave.indicatorV1.indicatorGet().format(),
-    ],100)
-    
+		zwave.indicatorV1.indicatorGet().format(),
+    ],100)    
 }
+
+
 def initialize() {
 	sendEvent(name: "numberOfButtons", value: 10)
     state.lastindval = 0
 }
 
+
 def installed() {
-initialize()
-configure()
-state.updatedLastRanAt = now()
+	initialize()
+	configure()
+	state.updatedLastRanAt = now()
 }
+
 
 def updated() {
 	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
 		state.updatedLastRanAt = now()
 		log.debug "Executing 'updated'"
         
-        initialize()
- 
+        initialize() 
 	}
 	else {
 		log.trace "updated(): Ran within last 5 seconds so skipping."
@@ -478,27 +492,27 @@ def updated() {
 
 
 def AssocNodes(txtlist,group,hub) {
-
-def List1
-def List3 = []
-def cmd = ""
-if (txtlist){
-	List1 = txtlist.tokenize(', ')
-	List3 = List1.collect{Integer.parseInt(it,16)}
-	if (hub){
-		List3 << zwaveHubNodeId
+	def List1
+	def List3 = []
+	def cmd = ""
+	if (txtlist){
+		List1 = txtlist.tokenize(', ')
+		List3 = List1.collect{Integer.parseInt(it,16)}
+		if (hub){
+			List3 << zwaveHubNodeId
 		}
 	} 
-else if (hub){
-	List3 = zwaveHubNodeId
+	else if (hub) {
+		List3 = zwaveHubNodeId
 	}
 
-log.debug "associating group for button:$group: $List3"
+	log.debug "associating group for button:$group: $List3"
 
-cmd = zwave.associationV1.associationSet(groupingIdentifier:group, nodeId:List3).format()
+	cmd = zwave.associationV1.associationSet(groupingIdentifier:group, nodeId:List3).format()
 
-return (cmd)
+	return (cmd)
 }
+
 
 // convert a hex string to integer
 def integerhex(String v) {
