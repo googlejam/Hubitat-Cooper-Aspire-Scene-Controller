@@ -17,31 +17,13 @@
 metadata {
 	definition (name: "Cooper RFWC5 RFWC5D Keypad", namespace: "joelwetzel", author: "Joel Wetzel") {
 		capability "Actuator"
-		capability "PushableButton"
 		capability "Configuration"
 		capability "Sensor"
         
 		command "CheckIndicators" //use to poll the indicator status
 		command "initialize"
 		command "IndicatorSet"
-		command "Indicator1On"
-		command "Indicator1Off"
-		command "Indicator2On"
-		command "Indicator2Off"
-		command "Indicator3On"
-		command "Indicator3Off"
-		command "Indicator4On"
-		command "Indicator4Off"
-		command "Indicator5On"
-		command "Indicator5Off"
         
-        attribute "currentButton", "STRING"
-        attribute "numberOfButtons", "number"
-        attribute "Indicator1", "enum",  ["on", "off"]
-        attribute "Indicator2", "enum",  ["on", "off"]
-        attribute "Indicator3","enum",  ["on", "off"]
-        attribute "Indicator4","enum",  ["on", "off"]
-        attribute "Indicator5","enum",  ["on", "off"]
         attribute "IndDisplay", "STRING"
         
 		fingerprint type: "0202", mfr: "001A", prod: "574D", model: "0000",  cc:"87,77,86,22,2D,85,72,21,70" 
@@ -100,17 +82,16 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 	
 	def events = []
     def event = []
-    def event2 =[]
     def indval = 0
-    def onoff = 0
-    def priorOnoff = 0
+    def onOff = 0
+    def priorOnOff = 0
     def ino = 0
     def ibit = 0
     def istring = ""
 	
     indval = cmd.value
 	
-    if (state.lastindval  == indval &&(now() -state.repeatStart <2000 )) {  // test to see if it is actually a change.  The controller sends double commands by design. 
+    if (state.lastindval  == indval && (now() -state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
     	//log.debug "skipping and repeat"
     	createEvent([:])
     }
@@ -122,41 +103,24 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 		for (i in 0..4) {
 			ibit = 2**i
 			ino = i + 1
-			onoff = indval & ibit
-			offOffset = 0
+			onOff = indval & ibit
 
-			priorOnoff = state.lastindval & ibit
-			//log.debug "$ino is $onoff , piorOnoff is:$priorOnoff ibit is $ibit"
+			priorOnOff = state.lastindval & ibit
+			//log.debug "$ino is $onOff , piorOnOff is:$priorOnOff ibit is $ibit"
 			
-			if (onoff != priorOnoff){
-				//log.debug "$ino first if true"
-				if (onoff) { //log.debug "$ino second if true"
-				   event = createEvent(name: "Indicator$ino", value: "on", descriptionText: "$device.label Indicator:$ino on", linkText: "$device.label Indicator:$ino on")
-				} else { //log.debug "$ino second if false"
-					event = createEvent(name: "Indicator$ino", value: "off", descriptionText: "$device.label Indicator:$ino off", linkText: "$device.label Indicator:$ino off")
-				}
-				events << event
-				if (state.buttonpush == 1){
-					//log.debug "PUSHED $ino , $onoff"
+			if (onOff != priorOnOff && state.buttonpush == 1) {
+				//log.debug "PUSHED $ino , $onOff"
 
-					if (onoff == 0) {
-						offOffset = 5
+				def existingChildDevices = getChildDevices()
+				if (existingChildDevices.size() == 5) {
+					if (onOff) {
+						existingChildDevices[ino-1].on()
 					}
-					
-					def existingChildDevices = getChildDevices()
-					if (existingChildDevices.size() == 5) {
-						if (onoff) {
-							existingChildDevices[ino-1].on()
-						}
-						else {
-							existingChildDevices[ino-1].off()
-						}
+					else {
+						existingChildDevices[ino-1].off()
 					}
-
-					event2 = createEvent(name:"pushed",value: (ino + offOffset),descriptionText:"$device.displayName button $ino pushed",linkText:"$device.label Button:$ino pushed",isStateChange: true)
-					events << event2
 				}
-			} //else { log.debug "$ino first if false"}
+			}
 		}
 		state.lastindval = indval
 		state.repeatStart = now()
@@ -310,56 +274,6 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 }
 
 
-def Indicator1On() {
-	IndicatorSet(1, 1)	
-}
-
-
-def Indicator1Off() {
-	IndicatorSet(1, 0)	
-}
-
-
-def Indicator2On() {
-	IndicatorSet(2, 1)	
-}
-
-
-def Indicator2Off() {
-	IndicatorSet(2, 0)	
-}
-
-
-def Indicator3On() {
-	IndicatorSet(3, 1)	
-}
-
-
-def Indicator3Off() {
-	IndicatorSet(3, 0)	
-}
-
-
-def Indicator4On() {
-	IndicatorSet(4, 1)	
-}
-
-
-def Indicator4Off() {
-	IndicatorSet(4, 0)	
-}
-
-
-def Indicator5On() {
-	IndicatorSet(5, 1)	
-}
-
-
-def Indicator5Off() {
-	IndicatorSet(5, 0)	
-}
-
-
 // because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
 def IndicatorSet(buttonIndex, onOrOff) {
 	if (buttonIndex < 1 || buttonIndex > 5) {
@@ -400,7 +314,6 @@ def CheckIndicators() {
 
 
 def initialize() {
-	sendEvent(name: "numberOfButtons", value: 10)
     state.lastindval = 0
 }
 
