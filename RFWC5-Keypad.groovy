@@ -20,9 +20,9 @@ metadata {
 		capability "Configuration"
 		capability "Sensor"
         
-		command "CheckIndicators" //use to poll the indicator status
+		command "CheckIndicators" 	//use to poll the indicator status
 		command "initialize"
-		command "IndicatorSet"
+		command "IndicatorSet"		// Set an indicator
         
         attribute "IndDisplay", "STRING"
         
@@ -30,6 +30,22 @@ metadata {
 	}	
     
     preferences {
+		section {
+			input (
+				type: "bool",
+				name: "enableDebugLogging",
+				title: "Enable Debug Logging?",
+				required: true,
+				defaultValue: true
+			)
+		}
+	}
+}
+
+
+def log(msg) {
+	if (enableDebugLogging) {
+		log.debug(msg)	
 	}
 }
 
@@ -40,9 +56,9 @@ def parse(String description) {
 	def cmd = zwave.parse(description)
 	if (cmd) {
 		result = zwaveEvent(cmd)
-		log.debug "Parsed ${cmd} to ${result.inspect()}"
+		log "Parsed ${cmd} to ${result.inspect()}"
 	} else {
-		log.debug "Non-parsed event: ${description}"
+		log "Non-parsed event: ${description}"
 	}
 	
 	result
@@ -50,7 +66,7 @@ def parse(String description) {
 
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
-	//log.debug "BASICSET"
+	//log "BASICSET"
 	
     def result = []
     def cmds = []
@@ -64,7 +80,7 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     
     
 def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
-	//log.debug "SCENEACTIVATIONSET"
+	//log "SCENEACTIVATIONSET"
 	
     def result = []
     def cmds = []
@@ -78,7 +94,7 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 
  
 def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
-	//log.debug "INDICATORREPORT"
+	//log "INDICATORREPORT"
 	
 	def events = []
     def event = []
@@ -92,7 +108,7 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
     indval = cmd.value
 	
     if (state.lastindval  == indval && (now() -state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
-    	//log.debug "skipping and repeat"
+    	//log "skipping and repeat"
     	createEvent([:])
     }
     else {
@@ -106,11 +122,8 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 			onOff = indval & ibit
 
 			priorOnOff = state.lastindval & ibit
-			//log.debug "$ino is $onOff , piorOnOff is:$priorOnOff ibit is $ibit"
 			
 			if (onOff != priorOnOff && state.buttonpush == 1) {
-				//log.debug "PUSHED $ino , $onOff"
-
 				def existingChildDevices = getChildDevices()
 				if (existingChildDevices.size() == 5) {
 					if (onOff) {
@@ -131,7 +144,7 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
-	//log.debug "COMMAND"
+	//log "COMMAND"
 	
 	def event = [isStateChange: true]
 	event.linkText = device.label ?: device.name
@@ -141,12 +154,10 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 
 
 def configure() {
-	//log.debug("CONFIGURE, hub id: $zwaveHubNodeId")
+	log("${device.displayName}:configure")
 	
 	createChildDevices()
 	
-	return
-
     def cmds = []
     
     //the buttons on the controller will not work with out a scene load in.  Use 251-255 if no scene number is specified in the preferences
@@ -208,16 +219,12 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 	def atlist = []
 	def amap = [level:0, anodes: []]
 
-	//log.debug "assoclist is:$assoclist"
-
 	//add clear associaton cmd to the list
 	cmds << zwave.associationV1.associationRemove(groupingIdentifier: btn, nodeId:[]).format()
 
 	// add the levels to the data structure.
 	if (assoclist) {
 		atlist = assoclist.tokenize(', ')
-		
-		// log.debug "atlist is: $atlist"
 		
 		lList = atlist.size()
 		for (int i = 1; i <= lList; i+=2) {
@@ -227,14 +234,13 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 			alists << amap  //build the matrix
 		}
 
-		// fill the matrix with nodes ordered with levels            log.debug "afterif alists:$alists  i is:$i x is:$x"
+		// fill the matrix with nodes ordered with levels
 		for (int i = 1; i <= lList; i+=2) {
 			for (int x = 0; x < alist.size(); x++){
 				def bob = alists[x]
 				if (bob.level == atlist[i]) {bob.anodes << atlist[i-1]}
 			}
 		}
-    	// log.debug "alists is now: $alists"
 	}
 	
 	// for each list of ids
@@ -245,13 +251,10 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 		def thisset = alists[i]
 		def nodestring = ""
 		def thislevel = [0x32]
-		//log.debug "alists $i is $thisset"
 
 		if (thisset) {
 			def alevel = thisset.level as int
 			nodestring = thisset.anodes.join(", ")
-			//log.debug "nodestring is: $nodestring"
-			//log.debug "xxxx $thisset.level.value"f
 			if (alevel <= 99 && alevel >= 0){        	
 				thislevel[0] = thisset.level as int
 
@@ -259,7 +262,6 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 			if (alevel == 255){
 				thislevel[0] = thisset.level as int
 				}
-			//log.debug "thislevel $i is $thislevel"
 		}
 		cmds << AssocNodes(nodestring,btn,0)
 		log.debug "setting configuration commands for button:$btn Level:$thislevel"        
@@ -293,14 +295,12 @@ def IndicatorSet(buttonIndex, onOrOff) {
 
 	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
 
-	//log.debug "INDICATORSET DEVICE LABEL: ${device.label}"
+	//log "INDICATORSET DEVICE LABEL: ${device.label}"
 
 	delayBetween([
 		zwave.indicatorV1.indicatorSet(value: newValue).format(),
 		zwave.indicatorV1.indicatorGet().format(),
 	],300)
-
-	//log.debug groovy.json.JsonOutput.toJson(result)
 }
 
 
@@ -326,20 +326,20 @@ def installed() {
 
 
 def createChildDevices() {
-	//log.debug "createChildDevices()"
-	
 	def existingChildDevices = getChildDevices()
 	if (existingChildDevices.size() > 0) {
 		log.debug "Child devices already exist.  Removing..."
 		
-		for (i in 1..existingChildDevices.size()) {
-			deleteChildDevice("CooperAspireSwitch-${i}")	
+		existingChildDevices.each {
+			log.debug "Removing ${it.displayName}"
+			deleteChildDevice(it.deviceNetworkId)
 		}
 	}
 	
-	log.debug "Configuring child devices..."
+	log.debug "Adding child devices..."
 	for (i in 1..5) {
-		addChildDevice("joelwetzel", "Cooper RFWC5 RFWC5D Button", "CooperAspireSwitch-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
+		log.debug "Adding ${device.displayName} (Switch ${i})"
+		addChildDevice("joelwetzel", "Cooper RFWC5 RFWC5D Button", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
 	}
 }
 
@@ -347,7 +347,7 @@ def createChildDevices() {
 def updated() {
 	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
 		state.updatedLastRanAt = now()
-		log.debug "Executing 'updated'"
+		log "${device.displayName}:updated()"
         
         initialize() 
 	}
