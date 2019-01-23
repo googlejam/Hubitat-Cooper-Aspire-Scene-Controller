@@ -29,7 +29,7 @@ def parse(String description) {
 
 
 def on() {
-	log.debug "${device.displayName} on"
+	log.debug "${device.displayName}: on"
 	sendEvent(name: "switch", value: "on", isStateChange: true)
 	
 	def parent = getParent()
@@ -41,7 +41,7 @@ def on() {
 
 
 def off() {
-	log.debug "${device.displayName} off"
+	log.debug "${device.displayName}: off"
     sendEvent(name: "switch", value: "off", isStateChange: true)
 	
 	def parent = getParent()
@@ -53,6 +53,6 @@ def off() {
 
 
 def installed() {
-	log.debug "${device.displayName} installed"
+	log.debug "${device.displayName}: installed"
 }
 
