@@ -23,6 +23,7 @@ metadata {
 		command "CheckIndicators" 	//use to poll the indicator status
 		command "initialize"
 		command "IndicatorSet"		// Set an indicator
+		command "SyncIndicators"
         
         attribute "IndDisplay", "STRING"
         
@@ -56,7 +57,10 @@ def parse(String description) {
 	def cmd = zwave.parse(description)
 	if (cmd) {
 		result = zwaveEvent(cmd)
-		log "Parsed ${cmd} to ${result.inspect()}"
+		
+		if (result.inspect()) {
+			log "Parsed ${cmd} to ${result.inspect()}"
+		}
 	} else {
 		log "Non-parsed event: ${description}"
 	}
@@ -295,8 +299,29 @@ def IndicatorSet(buttonIndex, onOrOff) {
 
 	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
 
-	//log "INDICATORSET DEVICE LABEL: ${device.label}"
+	delayBetween([
+		zwave.indicatorV1.indicatorSet(value: newValue).format(),
+		zwave.indicatorV1.indicatorGet().format(),
+	],300)
+}
 
+
+def SyncIndicators() {
+	def newValue = 0	
+	def ibit = 0
+	
+	def existingChildDevices = getChildDevices()
+	for (i in 0..4) {
+		if (existingChildDevices[i].currentValue("switch") == "on") {
+			ibit = 2**i
+			newValue = newValue | ibit
+		}
+	}
+	
+	state.buttonpush = 0
+			
+	log.debug "SyncIndicators()"
+	
 	delayBetween([
 		zwave.indicatorV1.indicatorSet(value: newValue).format(),
 		zwave.indicatorV1.indicatorGet().format(),
@@ -315,6 +340,8 @@ def CheckIndicators() {
 
 def initialize() {
     state.lastindval = 0
+	
+	runEvery5Minutes(SyncIndicators)
 }
 
 
