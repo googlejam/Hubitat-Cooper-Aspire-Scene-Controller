@@ -20,6 +20,9 @@ metadata {
 		capability "Actuator"
 		capability "Sensor"
 		capability "Switch"
+		
+		command "markOn"
+		command "markOff"
 	}
 }
 
@@ -50,6 +53,17 @@ def off() {
 		parent.IndicatorSet(childsIndex, 0)
 	}
 }
+
+
+def markOn() {
+	sendEvent(name: "switch", value: "on")	
+}
+
+
+def markOff() {
+	sendEvent(name: "switch", value: "off")	
+}
+
 
 
 def installed() {
