@@ -56,7 +56,7 @@ def parse(String description) {
 	if (cmd) {
 		result = zwaveEvent(cmd)
 		
-		if (result.inspect() != null) {
+		if (result != null && result.inspect() != null) {
 			log "Parsed ${cmd} to ${result.inspect()}"
 		}
 		else {
@@ -71,7 +71,8 @@ def parse(String description) {
 
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
-	//log "BASICSET"
+	// Happens twice when a button turns off
+	log "BASICSET"
 	
     def result = []
     def cmds = []
@@ -85,7 +86,8 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     
     
 def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
-	//log "SCENEACTIVATIONSET"
+	// Happens twice when a button turns on
+	log "SCENEACTIVATIONSET"
 	
     def result = []
     def cmds = []
@@ -99,7 +101,7 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 
  
 def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
-	//log "INDICATORREPORT"
+	log "INDICATORREPORT"
 	
 	def events = []
     def event = []
@@ -112,9 +114,9 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 	
     indval = cmd.value
 	
-    if (state.lastindval  == indval && (now() -state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
+    if (state.lastindval == indval && (now() - state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
     	//log "skipping and repeat"
-    	return createEvent([:])
+    	return null //createEvent([:])
     }
     else {
 		istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
@@ -132,10 +134,10 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 				def existingChildDevices = getChildDevices()
 				if (existingChildDevices.size() == 5) {
 					if (onOff) {
-						existingChildDevices[ino-1].on()
+						existingChildDevices[ino-1].markOn()
 					}
 					else {
-						existingChildDevices[ino-1].off()
+						existingChildDevices[ino-1].markOff()
 					}
 				}
 			}
@@ -164,6 +166,7 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 // *******************************************************
 
 def IndicatorSet(buttonIndex, onOrOff) {
+	log "IndicatorSet($buttonIndex , $onOrOff)"
 	// because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
 
 	if (buttonIndex < 1 || buttonIndex > 5) {
