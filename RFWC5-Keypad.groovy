@@ -14,6 +14,7 @@
  *
  */
 
+
 metadata {
 	definition (name: "Cooper RFWC5 RFWC5D Keypad", namespace: "joelwetzel", author: "Joel Wetzel") {
 		capability "Actuator"
@@ -44,12 +45,9 @@ metadata {
 }
 
 
-def log(msg) {
-	if (enableDebugLogging) {
-		log.debug(msg)	
-	}
-}
-
+// *******************************************************
+// *******************  Z-WAVE CODE **********************
+// *******************************************************
 
 def parse(String description) {
 	def result = null
@@ -58,8 +56,11 @@ def parse(String description) {
 	if (cmd) {
 		result = zwaveEvent(cmd)
 		
-		if (result.inspect()) {
+		if (result.inspect() != null) {
 			log "Parsed ${cmd} to ${result.inspect()}"
+		}
+		else {
+			log "NULL-parsed event: ${description}"	
 		}
 	} else {
 		log "Non-parsed event: ${description}"
@@ -113,7 +114,7 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 	
     if (state.lastindval  == indval && (now() -state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
     	//log "skipping and repeat"
-    	createEvent([:])
+    	return createEvent([:])
     }
     else {
 		istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
@@ -142,7 +143,7 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 		state.lastindval = indval
 		state.repeatStart = now()
 
-		events
+		return events
 	}
 }
 
@@ -154,6 +155,134 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 	event.linkText = device.label ?: device.name
 	event.descriptionText = "Cooper $event.linkText: $cmd"
 	event
+}
+
+
+
+// *******************************************************
+// *******************  PUBLIC API ***********************
+// *******************************************************
+
+def IndicatorSet(buttonIndex, onOrOff) {
+	// because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
+
+	if (buttonIndex < 1 || buttonIndex > 5) {
+		log.debug "$device.id Indicator set out of range"
+		return
+	}
+	
+	def newValue = 0
+	def ibit = 2**(buttonIndex-1)
+
+	if (onOrOff == "On" || onOrOff == 1) {
+		newValue = state.lastindval | ibit
+	}
+	else {
+		newValue = state.lastindval & ~ibit
+	}
+
+	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+
+	delayBetween([
+		zwave.indicatorV1.indicatorSet(value: newValue).format(),
+		zwave.indicatorV1.indicatorGet().format(),
+	],300)
+}
+
+
+def SyncIndicators() {
+	def newValue = 0	
+	def ibit = 0
+	
+	def existingChildDevices = getChildDevices()
+	for (i in 0..4) {
+		if (existingChildDevices[i].currentValue("switch") == "on") {
+			ibit = 2**i
+			newValue = newValue | ibit
+		}
+	}
+	
+	state.buttonpush = 0
+			
+	log.debug "SyncIndicators()"
+	
+	delayBetween([
+		zwave.indicatorV1.indicatorSet(value: newValue).format(),
+		zwave.indicatorV1.indicatorGet().format(),
+	],300)
+}
+
+
+def CheckIndicators() {
+	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+	
+	delayBetween([
+		zwave.indicatorV1.indicatorGet().format(),
+    ],100)    
+}
+
+
+
+// *******************************************************
+// *******************  UTILITY CODE *********************
+// *******************************************************
+
+
+def log(msg) {
+	if (enableDebugLogging) {
+		log.debug(msg)	
+	}
+}
+
+
+
+// *******************************************************
+// *************  CONFIGURATION CODE *********************
+// *******************************************************
+
+def initialize() {
+    state.lastindval = 0
+	
+	runEvery5Minutes(SyncIndicators)
+}
+
+
+def installed() {
+	initialize()
+	configure()
+	state.updatedLastRanAt = now()
+}
+
+
+def updated() {
+	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
+		state.updatedLastRanAt = now()
+		log "${device.displayName}:updated()"
+        
+        initialize() 
+	}
+	else {
+		log.trace "updated(): Ran within last 5 seconds so skipping."
+	}
+}
+
+
+def createChildDevices() {
+	def existingChildDevices = getChildDevices()
+	if (existingChildDevices.size() > 0) {
+		log.debug "Child devices already exist.  Removing..."
+		
+		existingChildDevices.each {
+			log.debug "Removing ${it.displayName}"
+			deleteChildDevice(it.deviceNetworkId)
+		}
+	}
+	
+	log.debug "Adding child devices..."
+	for (i in 1..5) {
+		log.debug "Adding ${device.displayName} (Switch ${i})"
+		addChildDevice("joelwetzel", "Cooper RFWC5 RFWC5D Button", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
+	}
 }
 
 
@@ -277,110 +406,6 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 	cmds << AssocNodes(scenelist, btn, 1)
 
 	return (cmds)
-}
-
-
-// because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
-def IndicatorSet(buttonIndex, onOrOff) {
-	if (buttonIndex < 1 || buttonIndex > 5) {
-		log.debug "$device.id Indicator set out of range"
-		return
-	}
-	
-	def newValue = 0
-	def ibit = 2**(buttonIndex-1)
-
-	if (onOrOff == "On" || onOrOff == 1) {
-		newValue = state.lastindval | ibit
-	}
-	else {
-		newValue = state.lastindval & ~ibit
-	}
-
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
-
-	delayBetween([
-		zwave.indicatorV1.indicatorSet(value: newValue).format(),
-		zwave.indicatorV1.indicatorGet().format(),
-	],300)
-}
-
-
-def SyncIndicators() {
-	def newValue = 0	
-	def ibit = 0
-	
-	def existingChildDevices = getChildDevices()
-	for (i in 0..4) {
-		if (existingChildDevices[i].currentValue("switch") == "on") {
-			ibit = 2**i
-			newValue = newValue | ibit
-		}
-	}
-	
-	state.buttonpush = 0
-			
-	log.debug "SyncIndicators()"
-	
-	delayBetween([
-		zwave.indicatorV1.indicatorSet(value: newValue).format(),
-		zwave.indicatorV1.indicatorGet().format(),
-	],300)
-}
-
-
-def CheckIndicators() {
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
-	
-	delayBetween([
-		zwave.indicatorV1.indicatorGet().format(),
-    ],100)    
-}
-
-
-def initialize() {
-    state.lastindval = 0
-	
-	runEvery5Minutes(SyncIndicators)
-}
-
-
-def installed() {
-	initialize()
-	configure()
-	state.updatedLastRanAt = now()
-}
-
-
-def createChildDevices() {
-	def existingChildDevices = getChildDevices()
-	if (existingChildDevices.size() > 0) {
-		log.debug "Child devices already exist.  Removing..."
-		
-		existingChildDevices.each {
-			log.debug "Removing ${it.displayName}"
-			deleteChildDevice(it.deviceNetworkId)
-		}
-	}
-	
-	log.debug "Adding child devices..."
-	for (i in 1..5) {
-		log.debug "Adding ${device.displayName} (Switch ${i})"
-		addChildDevice("joelwetzel", "Cooper RFWC5 RFWC5D Button", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
-	}
-}
-
-
-def updated() {
-	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
-		state.updatedLastRanAt = now()
-		log "${device.displayName}:updated()"
-        
-        initialize() 
-	}
-	else {
-		log.trace "updated(): Ran within last 5 seconds so skipping."
-	}
 }
 
 
