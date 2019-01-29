@@ -60,10 +60,10 @@ def parse(String description) {
 			log "Parsed ${cmd} to ${result.inspect()}"
 		}
 		else {
-			log "NULL-parsed event: ${description}"	
+			//log "NULL-parsed event: ${description}"	
 		}
 	} else {
-		log "Non-parsed event: ${description}"
+		//log "Non-parsed event: ${description}"
 	}
 	
 	result
@@ -71,11 +71,20 @@ def parse(String description) {
 
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
-	// Happens twice when a button turns off
-	log "BASICSET"
+	// Fired twice when a button is physically pushed off
 	
     def result = []
     def cmds = []
+	
+	// Only perform an indicatorGet for half of these events
+	if (state.basicSet) {
+		//log "dropping basicSet"
+		state.basicSet = false
+		return result	
+	}
+	state.basicSet = true
+
+	//log "BASICSET"
 
 	state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
@@ -86,12 +95,21 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     
     
 def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
-	// Happens twice when a button turns on
-	log "SCENEACTIVATIONSET"
+	// Fired twice when a button is physically pushed on
 	
     def result = []
     def cmds = []
-	
+
+	// Only perform an indicatorGet for half of these events
+	if (state.sceneActivationSet) {
+		//log "dropping sceneActivationSet"
+		state.sceneActivationSet = false
+		return result	
+	}
+	state.sceneActivationSet = true
+
+	//log "SCENEACTIVATIONSET"
+
     state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
@@ -101,7 +119,7 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 
  
 def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
-	log "INDICATORREPORT"
+	//log "INDICATORREPORT"
 	
 	def events = []
     def event = []
@@ -114,8 +132,8 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 	
     indval = cmd.value
 	
-    if (state.lastindval == indval && (now() - state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
-    	//log "skipping and repeat"
+    if (false && state.lastindval == indval && (now() - state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
+    	//log "SKIPPING and REPEAT"
     	return null //createEvent([:])
     }
     else {
@@ -144,6 +162,9 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 		}
 		state.lastindval = indval
 		state.repeatStart = now()
+		
+		state.sceneActivationSet = false
+		state.basicSet = false
 
 		return events
 	}
@@ -166,11 +187,10 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 // *******************************************************
 
 def IndicatorSet(buttonIndex, onOrOff) {
-	log "IndicatorSet($buttonIndex , $onOrOff)"
-	// because of delay in getting state.lastindval delays of at least 1 second should be used between calling this command.
+	//log "IndicatorSet($buttonIndex , $onOrOff)"
+	// Because of delay in getting state.lastindval, delays of at least 1 second should be used between calling this command.
 
 	if (buttonIndex < 1 || buttonIndex > 5) {
-		log.debug "$device.id Indicator set out of range"
 		return
 	}
 	
@@ -184,7 +204,7 @@ def IndicatorSet(buttonIndex, onOrOff) {
 		newValue = state.lastindval & ~ibit
 	}
 
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+	state.buttonpush = 0  // upcoming indicatorGet command is from this API call, and not the result of a button press
 
 	delayBetween([
 		zwave.indicatorV1.indicatorSet(value: newValue).format(),
@@ -205,9 +225,9 @@ def SyncIndicators() {
 		}
 	}
 	
-	state.buttonpush = 0
+	state.buttonpush = 0	// upcoming indicatorGet command is from this API call, and not the result of a button press
 			
-	log.debug "SyncIndicators()"
+	//log "SyncIndicators()"
 	
 	delayBetween([
 		zwave.indicatorV1.indicatorSet(value: newValue).format(),
@@ -217,7 +237,7 @@ def SyncIndicators() {
 
 
 def CheckIndicators() {
-	state.buttonpush = 0  //upcoming indicatorGet command is not the result of a button press
+	state.buttonpush = 0  // upcoming indicatorGet command is from this API call, and not the result of a button press
 	
 	delayBetween([
 		zwave.indicatorV1.indicatorGet().format(),
@@ -245,6 +265,10 @@ def log(msg) {
 
 def initialize() {
     state.lastindval = 0
+
+	// These two booleans are to prevent double requests for IndicatorReports when buttons are physically pushed.
+	state.sceneActivationSet = false
+	state.basicSet = false
 	
 	runEvery5Minutes(SyncIndicators)
 }
@@ -273,24 +297,24 @@ def updated() {
 def createChildDevices() {
 	def existingChildDevices = getChildDevices()
 	if (existingChildDevices.size() > 0) {
-		log.debug "Child devices already exist.  Removing..."
+		log.info "Child devices already exist.  Removing..."
 		
 		existingChildDevices.each {
-			log.debug "Removing ${it.displayName}"
+			log.info "Removing ${it.displayName}"
 			deleteChildDevice(it.deviceNetworkId)
 		}
 	}
 	
-	log.debug "Adding child devices..."
+	log.info "Adding child devices..."
 	for (i in 1..5) {
-		log.debug "Adding ${device.displayName} (Switch ${i})"
+		log.info "Adding ${device.displayName} (Switch ${i})"
 		addChildDevice("joelwetzel", "Cooper RFWC5 RFWC5D Button", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
 	}
 }
 
 
 def configure() {
-	log("${device.displayName}:configure")
+	log.info "${device.displayName}:configure"
 	
 	createChildDevices()
 	
@@ -340,8 +364,8 @@ def configure() {
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:5).format()
 
 	// send commands
-	log.debug "$cmds"
-	log.debug "Please Wait this can take a few minutes"
+	log.info "$cmds"
+	log.info "Please Wait this can take a few minutes"
 	delayBetween(cmds,3500)
 }
 
@@ -427,7 +451,7 @@ def AssocNodes(txtlist,group,hub) {
 		List3 = zwaveHubNodeId
 	}
 
-	log.debug "associating group for button:$group: $List3"
+	log.info "associating group for button:$group: $List3"
 
 	cmd = zwave.associationV1.associationSet(groupingIdentifier:group, nodeId:List3).format()
 
