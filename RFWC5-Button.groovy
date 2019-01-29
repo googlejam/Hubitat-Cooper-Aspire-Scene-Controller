@@ -55,18 +55,19 @@ def off() {
 }
 
 
+// Set the switch on without firing any followup events.  Prevents cyclical firings.
 def markOn() {
 	sendEvent(name: "switch", value: "on")	
 }
 
 
+// Set the switch off without firing any followup events.  Prevents cyclical firings.
 def markOff() {
 	sendEvent(name: "switch", value: "off")	
 }
 
 
-
 def installed() {
-	log.debug "${device.displayName}: installed"
+	log.info "${device.displayName}: installed"
 }
 
