@@ -33,35 +33,37 @@ def parse(String description) {
 
 def on() {
 	log.debug "${device.displayName}: on"
+	
 	sendEvent(name: "switch", value: "on", isStateChange: true)
 	
-	def parent = getParent()
-	if (parent) {
-		def childsIndex = device.deviceNetworkId[device.deviceNetworkId.size() - 1] as Integer
-		parent.IndicatorSet(childsIndex, 1)
-	}
+	runIn(1, pushStateToKeypad)
 }
 
 
 def off() {
 	log.debug "${device.displayName}: off"
+	
     sendEvent(name: "switch", value: "off", isStateChange: true)
 	
+	runIn(1, pushStateToKeypad)
+}
+
+
+def pushStateToKeypad() {
 	def parent = getParent()
 	if (parent) {
-		def childsIndex = device.deviceNetworkId[device.deviceNetworkId.size() - 1] as Integer
-		parent.IndicatorSet(childsIndex, 0)
+		parent.SyncIndicators()
 	}
 }
 
 
-// Set the switch on without firing any followup events.  Prevents cyclical firings.
+// Set the virtual switch on without firing any followup events.  Prevents cyclical firings.
 def markOn() {
 	sendEvent(name: "switch", value: "on")	
 }
 
 
-// Set the switch off without firing any followup events.  Prevents cyclical firings.
+// Set the virtual switch off without firing any followup events.  Prevents cyclical firings.
 def markOff() {
 	sendEvent(name: "switch", value: "off")	
 }
