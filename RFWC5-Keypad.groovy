@@ -23,7 +23,6 @@ metadata {
         
 		command "CheckIndicators" 	//use to poll the indicator status
 		command "initialize"
-		command "IndicatorSet"		// Set an indicator
 		command "SyncIndicators"
         
         attribute "IndDisplay", "STRING"
@@ -59,11 +58,6 @@ def parse(String description) {
 		if (result != null && result.inspect() != null) {
 			log "Parsed ${cmd} to ${result.inspect()}"
 		}
-		else {
-			//log "NULL-parsed event: ${description}"	
-		}
-	} else {
-		//log "Non-parsed event: ${description}"
 	}
 	
 	result
@@ -78,13 +72,11 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
 	
 	// Only perform an indicatorGet for half of these events
 	if (state.basicSet) {
-		//log "dropping basicSet"
+		//log "ignoring extra basicSet"
 		state.basicSet = false
 		return result	
 	}
 	state.basicSet = true
-
-	//log "BASICSET"
 
 	state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
@@ -102,13 +94,11 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 
 	// Only perform an indicatorGet for half of these events
 	if (state.sceneActivationSet) {
-		//log "dropping sceneActivationSet"
+		//log "ignoring extra sceneActivationSet"
 		state.sceneActivationSet = false
 		return result	
 	}
 	state.sceneActivationSet = true
-
-	//log "SCENEACTIVATIONSET"
 
     state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
@@ -119,61 +109,37 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 
  
 def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
-	//log "INDICATORREPORT"
-	
 	def events = []
     def event = []
-    def indval = 0
-    def onOff = 0
-    def priorOnOff = 0
-    def ino = 0
-    def ibit = 0
-    def istring = ""
 	
-    indval = cmd.value
+    def indval = cmd.value
 	
-    if (false && state.lastindval == indval && (now() - state.repeatStart < 2000)) {  // test to see if it is actually a change.  The controller sends double commands by design. 
-    	//log "SKIPPING and REPEAT"
-    	return null //createEvent([:])
-    }
-    else {
-		istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
-		event = createEvent(name: "IndDisplay", value: "$istring", descriptionText: "Indicators: $istring", linkText: "device.label Indicators: $istring")
-		events << event
+	def istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
+	event = createEvent(name: "IndDisplay", value: "$istring", descriptionText: "Indicators: $istring", linkText: "device.label Indicators: $istring")
+	events << event
 
-		for (i in 0..4) {
-			ibit = 2**i
-			ino = i + 1
-			onOff = indval & ibit
+	def existingChildDevices = getChildDevices()
 
-			priorOnOff = state.lastindval & ibit
-			
-			if (onOff != priorOnOff && state.buttonpush == 1) {
-				def existingChildDevices = getChildDevices()
-				if (existingChildDevices.size() == 5) {
-					if (onOff) {
-						existingChildDevices[ino-1].markOn()
-					}
-					else {
-						existingChildDevices[ino-1].markOff()
-					}
-				}
-			}
+	for (i in 0..4) {
+		def ibit = 2**i
+		def onOff = indval & ibit
+
+		if (onOff) {
+			existingChildDevices[i].markOn()
 		}
-		state.lastindval = indval
-		state.repeatStart = now()
-		
-		state.sceneActivationSet = false
-		state.basicSet = false
-
-		return events
+		else {
+			existingChildDevices[i].markOff()
+		}
 	}
+		
+	state.sceneActivationSet = false
+	state.basicSet = false
+
+	return events
 }
 
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
-	//log "COMMAND"
-	
 	def event = [isStateChange: true]
 	event.linkText = device.label ?: device.name
 	event.descriptionText = "Cooper $event.linkText: $cmd"
@@ -186,34 +152,10 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 // *******************  PUBLIC API ***********************
 // *******************************************************
 
-def IndicatorSet(buttonIndex, onOrOff) {
-	//log "IndicatorSet($buttonIndex , $onOrOff)"
-	// Because of delay in getting state.lastindval, delays of at least 1 second should be used between calling this command.
-
-	if (buttonIndex < 1 || buttonIndex > 5) {
-		return
-	}
-	
-	def newValue = 0
-	def ibit = 2**(buttonIndex-1)
-
-	if (onOrOff == "On" || onOrOff == 1) {
-		newValue = state.lastindval | ibit
-	}
-	else {
-		newValue = state.lastindval & ~ibit
-	}
-
-	state.buttonpush = 0  // upcoming indicatorGet command is from this API call, and not the result of a button press
-
-	delayBetween([
-		zwave.indicatorV1.indicatorSet(value: newValue).format(),
-		zwave.indicatorV1.indicatorGet().format(),
-	],300)
-}
-
 
 def SyncIndicators() {
+	//log "SyncIndicators()"
+
 	def newValue = 0	
 	def ibit = 0
 	
@@ -226,8 +168,6 @@ def SyncIndicators() {
 	}
 	
 	state.buttonpush = 0	// upcoming indicatorGet command is from this API call, and not the result of a button press
-			
-	//log "SyncIndicators()"
 	
 	delayBetween([
 		zwave.indicatorV1.indicatorSet(value: newValue).format(),
@@ -237,6 +177,8 @@ def SyncIndicators() {
 
 
 def CheckIndicators() {
+	//log "CheckIndicators()"
+	
 	state.buttonpush = 0  // upcoming indicatorGet command is from this API call, and not the result of a button press
 	
 	delayBetween([
@@ -264,8 +206,6 @@ def log(msg) {
 // *******************************************************
 
 def initialize() {
-    state.lastindval = 0
-
 	// These two booleans are to prevent double requests for IndicatorReports when buttons are physically pushed.
 	state.sceneActivationSet = false
 	state.basicSet = false
