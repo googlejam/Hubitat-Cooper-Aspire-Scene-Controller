@@ -1,5 +1,5 @@
 /**
- *  Cooper RFWC5 RFWC5D Keypad
+ *  Cooper RFWC5 Keypad
  *
  *  Copyright 2019 Joel Wetzel
  *
@@ -16,14 +16,15 @@
 
 
 metadata {
-	definition (name: "Cooper RFWC5 RFWC5D Keypad", namespace: "joelwetzel", author: "Joel Wetzel") {
+	definition (name: "Cooper RFWC5 Keypad", namespace: "joelwetzel", author: "Joel Wetzel") {
 		capability "Actuator"
 		capability "Configuration"
 		capability "Sensor"
         
 		command "CheckIndicators" 	//use to poll the indicator status
 		command "initialize"
-		command "SyncIndicators"
+		command "syncIndicators"
+		command "createChildDevices"
         
         attribute "IndDisplay", "STRING"
         
@@ -70,14 +71,6 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     def result = []
     def cmds = []
 	
-	// Only perform an indicatorGet for half of these events
-	if (state.basicSet) {
-		//log "ignoring extra basicSet"
-		state.basicSet = false
-		return result	
-	}
-	state.basicSet = true
-
 	state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
@@ -91,14 +84,6 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 	
     def result = []
     def cmds = []
-
-	// Only perform an indicatorGet for half of these events
-	if (state.sceneActivationSet) {
-		//log "ignoring extra sceneActivationSet"
-		state.sceneActivationSet = false
-		return result	
-	}
-	state.sceneActivationSet = true
 
     state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
@@ -118,23 +103,22 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 	event = createEvent(name: "IndDisplay", value: "$istring", descriptionText: "Indicators: $istring", linkText: "device.label Indicators: $istring")
 	events << event
 
-	def existingChildDevices = getChildDevices()
+	if (state.buttonpush == 1) {
+		def existingChildDevices = getChildDevices()
 
-	for (i in 0..4) {
-		def ibit = 2**i
-		def onOff = indval & ibit
+		for (i in 0..4) {
+			def ibit = 2**i
+			def onOff = indval & ibit
 
-		if (onOff) {
-			existingChildDevices[i].markOn()
-		}
-		else {
-			existingChildDevices[i].markOff()
+			if (onOff) {
+				existingChildDevices[i].markOn()
+			}
+			else {
+				existingChildDevices[i].markOff()
+			}
 		}
 	}
 		
-	state.sceneActivationSet = false
-	state.basicSet = false
-
 	return events
 }
 
@@ -153,8 +137,8 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 // *******************************************************
 
 
-def SyncIndicators() {
-	//log "SyncIndicators()"
+def syncIndicators() {
+	//log "syncIndicators()"
 
 	def newValue = 0	
 	def ibit = 0
@@ -172,7 +156,7 @@ def SyncIndicators() {
 	delayBetween([
 		zwave.indicatorV1.indicatorSet(value: newValue).format(),
 		zwave.indicatorV1.indicatorGet().format(),
-	],300)
+	], 300)
 }
 
 
@@ -183,7 +167,7 @@ def CheckIndicators() {
 	
 	delayBetween([
 		zwave.indicatorV1.indicatorGet().format(),
-    ],100)    
+    ], 100)    
 }
 
 
@@ -206,31 +190,30 @@ def log(msg) {
 // *******************************************************
 
 def initialize() {
-	// These two booleans are to prevent double requests for IndicatorReports when buttons are physically pushed.
-	state.sceneActivationSet = false
-	state.basicSet = false
+	log.info "${device.displayName}.initialize()"
 	
-	runEvery5Minutes(SyncIndicators)
+	//unschedule("syncIndicators")
+	//runEvery5Minutes(syncIndicators)
+	//state.remove("flashing")
 }
 
 
 def installed() {
+	log.info "${device.displayName}.installed()"
+	
 	initialize()
 	configure()
-	state.updatedLastRanAt = now()
+}
+
+def uninstalled() {
+	log.info "${device.displayName}.uninstalled()"
 }
 
 
 def updated() {
-	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
-		state.updatedLastRanAt = now()
-		log "${device.displayName}:updated()"
+	log "${device.displayName}:updated()"
         
-        initialize() 
-	}
-	else {
-		log.trace "updated(): Ran within last 5 seconds so skipping."
-	}
+    initialize() 
 }
 
 
@@ -240,16 +223,16 @@ def createChildDevices() {
 		log.info "Child devices already exist.  Removing..."
 		
 		existingChildDevices.each {
-			log.info "Removing ${it.displayName}"
 			deleteChildDevice(it.deviceNetworkId)
 		}
 	}
 	
 	log.info "Adding child devices..."
 	for (i in 1..5) {
-		log.info "Adding ${device.displayName} (Switch ${i})"
-		addChildDevice("joelwetzel", "Cooper RFWC5 RFWC5D Button", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
+		addChildDevice("joelwetzel", "Cooper RFWC5 Virtual Switch", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
 	}
+	
+	runIn(1, syncIndicators)
 }
 
 
@@ -290,15 +273,19 @@ def configure() {
 	cmds += buttoncmds(1, s1, sceneCap1, assocCap1, d1)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:1).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:1).format()
+	
 	cmds += buttoncmds(2, s2, sceneCap2, assocCap2, d2)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:2).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:2).format()
+	
 	cmds += buttoncmds(3, s3, sceneCap3, assocCap3, d3)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:3).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:3).format()
+	
 	cmds += buttoncmds(4, s4, sceneCap4, assocCap4, d4)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:4).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:4).format()
+	
 	cmds += buttoncmds(5, s5, sceneCap5, assocCap5, d5)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:5).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:5).format()
@@ -328,9 +315,12 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 		
 		lList = atlist.size()
 		for (int i = 1; i <= lList; i+=2) {
-			if(alist.every { it != atlist[i]}) {	alist << atlist[i] } // if the value is not in alist then add it.
+			if (alist.every { it != atlist[i]}) {
+				alist << atlist[i] 						// if the value is not in alist then add it.
+			} 
 		}
-		alist.each{amap = [level: it, anodes: []]      //add the levels to the data structure
+		alist.each {
+			amap = [level: it, anodes: []]      //add the levels to the data structure
 			alists << amap  //build the matrix
 		}
 
@@ -338,7 +328,9 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 		for (int i = 1; i <= lList; i+=2) {
 			for (int x = 0; x < alist.size(); x++){
 				def bob = alists[x]
-				if (bob.level == atlist[i]) {bob.anodes << atlist[i-1]}
+				if (bob.level == atlist[i]) {
+					bob.anodes << atlist[i-1]
+				}
 			}
 		}
 	}
@@ -347,7 +339,7 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 	// <<create association set commands
 	// <<create configuration set commands
 	
-	for (int i = 0; i <=alists.size(); i++) {   
+	for (int i = 0; i <= alists.size(); i++) {   
 		def thisset = alists[i]
 		def nodestring = ""
 		def thislevel = [0x32]
@@ -355,13 +347,12 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 		if (thisset) {
 			def alevel = thisset.level as int
 			nodestring = thisset.anodes.join(", ")
-			if (alevel <= 99 && alevel >= 0){        	
+			if (alevel <= 99 && alevel >= 0) {        	
 				thislevel[0] = thisset.level as int
-
-				}
-			if (alevel == 255){
+			}
+			if (alevel == 255) {
 				thislevel[0] = thisset.level as int
-				}
+			}
 		}
 		cmds << AssocNodes(nodestring,btn,0)
 		log.debug "setting configuration commands for button:$btn Level:$thislevel"        
