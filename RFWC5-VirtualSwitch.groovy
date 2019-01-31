@@ -1,5 +1,5 @@
 /**
- *  Cooper RFWC5 RFWC5D Button
+ *  Cooper RFWC5 Virtual Switch
  *
  *  Copyright 2019 Joel Wetzel
  *
@@ -16,7 +16,7 @@
 
 
 metadata {
-	definition (name: "Cooper RFWC5 RFWC5D Button", namespace: "joelwetzel", author: "Joel Wetzel") {
+	definition (name: "Cooper RFWC5 Virtual Switch", namespace: "joelwetzel", author: "Joel Wetzel") {
 		capability "Actuator"
 		capability "Sensor"
 		capability "Switch"
@@ -52,7 +52,7 @@ def off() {
 def pushStateToKeypad() {
 	def parent = getParent()
 	if (parent) {
-		parent.SyncIndicators()
+		parent.syncIndicators()
 	}
 }
 
@@ -71,5 +71,11 @@ def markOff() {
 
 def installed() {
 	log.info "${device.displayName}: installed"
+	
+	sendEvent(name: "switch", value: "off", isStateChange: true)
+}
+
+def uninstalled() {
+	log.info "${device.displayName}: uninstalled"
 }
 
