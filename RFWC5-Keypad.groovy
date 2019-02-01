@@ -20,13 +20,15 @@ metadata {
 		capability "Actuator"
 		capability "Configuration"
 		capability "Sensor"
+		capability "Refresh"
         
-		command "CheckIndicators" 	//use to poll the indicator status
-		command "initialize"
-		command "syncIndicators"
-		command "createChildDevices"
+//		command "initialize"
+		command "syncVirtualStateToIndicators"
+		command "removeExistingChildDevices"
+		command "configureChildDevicesAsVirtualSwitches"
         
-        attribute "IndDisplay", "STRING"
+        attribute "Indicators", "STRING"
+		attribute "VirtualDeviceMode", "STRING"
         
 		fingerprint type: "0202", mfr: "001A", prod: "574D", model: "0000",  cc:"87,77,86,22,2D,85,72,21,70" 
 	}	
@@ -58,6 +60,9 @@ def parse(String description) {
 		
 		if (result != null && result.inspect() != null) {
 			log "Parsed ${cmd} to ${result.inspect()}"
+		}
+		else {
+			log "Unparsed: ${cmd}"	
 		}
 	}
 	
@@ -99,22 +104,26 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 	
     def indval = cmd.value
 	
-	def istring = "IND " + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
-	event = createEvent(name: "IndDisplay", value: "$istring", descriptionText: "Indicators: $istring", linkText: "device.label Indicators: $istring")
+	def istring = "" + Integer.toString(indval+128,2).reverse().take(5) // create a string to display for user
+	event = createEvent(name: "Indicators", value: "$istring", descriptionText: "Indicators: $istring", linkText: "Indicators: $istring")
 	events << event
 
 	if (state.buttonpush == 1) {
-		def existingChildDevices = getChildDevices()
+		def currentMode = device.currentValue("VirtualDeviceMode")
+		
+		if (currentMode == "virtualSwitches") {
+			def existingChildDevices = getChildDevices()
 
-		for (i in 0..4) {
-			def ibit = 2**i
-			def onOff = indval & ibit
+			for (i in 0..4) {
+				def ibit = 2**i
+				def onOff = indval & ibit
 
-			if (onOff) {
-				existingChildDevices[i].markOn()
-			}
-			else {
-				existingChildDevices[i].markOff()
+				if (onOff) {
+					existingChildDevices[i].markOn()
+				}
+				else {
+					existingChildDevices[i].markOff()
+				}
 			}
 		}
 	}
@@ -123,12 +132,12 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 }
 
 
-def zwaveEvent(hubitat.zwave.Command cmd) {
+/*def zwaveEvent(hubitat.zwave.Command cmd) {
 	def event = [isStateChange: true]
 	event.linkText = device.label ?: device.name
 	event.descriptionText = "Cooper $event.linkText: $cmd"
 	event
-}
+}*/
 
 
 
@@ -137,33 +146,43 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 // *******************************************************
 
 
-def syncIndicators() {
-	//log "syncIndicators()"
+//
+// Make the keypad's indicators match the states of the virtual child devices.
+//
+def syncVirtualStateToIndicators() {
+	log "${device.displayName}.syncVirtualStateToIndicators()"
+
+	def currentMode = device.currentValue("VirtualDeviceMode")
 
 	def newValue = 0	
 	def ibit = 0
 	
-	def existingChildDevices = getChildDevices()
-	for (i in 0..4) {
-		if (existingChildDevices[i].currentValue("switch") == "on") {
-			ibit = 2**i
-			newValue = newValue | ibit
+	if (currentMode == "virtualSwitches") {
+		def existingChildDevices = getChildDevices()
+		for (i in 0..4) {
+			if (existingChildDevices[i].currentValue("switch") == "on") {
+				ibit = 2**i
+				newValue = newValue | ibit
+			}
 		}
+
+		state.buttonpush = 0	// upcoming indicatorGet command is from this API call, and not the result of a button press
+
+		delayBetween([
+			zwave.indicatorV1.indicatorSet(value: newValue).format(),
+			zwave.indicatorV1.indicatorGet().format(),
+		], 300)
 	}
-	
-	state.buttonpush = 0	// upcoming indicatorGet command is from this API call, and not the result of a button press
-	
-	delayBetween([
-		zwave.indicatorV1.indicatorSet(value: newValue).format(),
-		zwave.indicatorV1.indicatorGet().format(),
-	], 300)
 }
 
 
-def CheckIndicators() {
-	//log "CheckIndicators()"
+//
+// Request the current state from the keypad, and set any child devices to match
+//
+def refresh() {
+	log "${device.displayName}.refresh()"
 	
-	state.buttonpush = 0  // upcoming indicatorGet command is from this API call, and not the result of a button press
+	state.buttonpush = 1  // If anything has changed on the indicators, allow those changes to push to the virtual child devices.
 	
 	delayBetween([
 		zwave.indicatorV1.indicatorGet().format(),
@@ -189,21 +208,26 @@ def log(msg) {
 // *************  CONFIGURATION CODE *********************
 // *******************************************************
 
+
+//
+// This is only here for while debugging.  Contains dev utility code.  Uncomment the command in the metadata to use it.
+//
 def initialize() {
 	log.info "${device.displayName}.initialize()"
 	
 	//unschedule("syncIndicators")
 	//runEvery5Minutes(syncIndicators)
-	//state.remove("flashing")
+	//state.remove("flashing")	
 }
 
 
 def installed() {
 	log.info "${device.displayName}.installed()"
 	
-	initialize()
-	configure()
+	sendEvent(name: "Indicators", value: "000000", isStateChange: true)
+	sendEvent(name: "VirtualDeviceMode", value: "none", isStateChange: true)
 }
+
 
 def uninstalled() {
 	log.info "${device.displayName}.uninstalled()"
@@ -211,35 +235,49 @@ def uninstalled() {
 
 
 def updated() {
-	log "${device.displayName}:updated()"
-        
-    initialize() 
+	log "${device.displayName}.updated()"
 }
 
 
-def createChildDevices() {
+//
+// Remove all current child virtual devices.
+//
+def removeExistingChildDevices() {
 	def existingChildDevices = getChildDevices()
 	if (existingChildDevices.size() > 0) {
-		log.info "Child devices already exist.  Removing..."
+		log.info "${device.displayName}: Removing existing child devices..."
 		
 		existingChildDevices.each {
 			deleteChildDevice(it.deviceNetworkId)
 		}
 	}
 	
+	sendEvent(name: "VirtualDeviceMode", value: "none", isStateChange: true)
+}
+
+
+//
+// Configure 5 virtual switches as child devices.  Each will map to a button on the keypad.
+//
+def configureChildDevicesAsVirtualSwitches() {
+	removeExistingChildDevices()
+	
 	log.info "Adding child devices..."
 	for (i in 1..5) {
 		addChildDevice("joelwetzel", "Cooper RFWC5 Virtual Switch", "${device.displayName}-${i}", [completedSet: true, label: "${device.displayName} (Switch ${i})", isComponent: true, componentName: "ch$i", componentLabel: "Switch $i"])
 	}
 	
-	runIn(1, syncIndicators)
+	sendEvent(name: "VirtualDeviceMode", value: "virtualSwitches", isStateChange: true)
+	
+	runIn(1, syncVirtualStateToIndicators)
 }
 
 
+//
+// This sets the Z-Wave configuration on the keypad device.
+//
 def configure() {
-	log.info "${device.displayName}:configure"
-	
-	createChildDevices()
+	log.info "${device.displayName}.configure() - setting the Z-Wave configuration on the physical keypad device."
 	
     def cmds = []
     
@@ -270,35 +308,37 @@ def configure() {
     if (dimdur5) d5=dimdur5 else d5 = 0x00
     
 	//for each button group create a sub to run for each button
-	cmds += buttoncmds(1, s1, sceneCap1, assocCap1, d1)
+	cmds += buttonCmds(1, s1, sceneCap1, assocCap1, d1)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:1).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:1).format()
 	
-	cmds += buttoncmds(2, s2, sceneCap2, assocCap2, d2)
+	cmds += buttonCmds(2, s2, sceneCap2, assocCap2, d2)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:2).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:2).format()
 	
-	cmds += buttoncmds(3, s3, sceneCap3, assocCap3, d3)
+	cmds += buttonCmds(3, s3, sceneCap3, assocCap3, d3)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:3).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:3).format()
 	
-	cmds += buttoncmds(4, s4, sceneCap4, assocCap4, d4)
+	cmds += buttonCmds(4, s4, sceneCap4, assocCap4, d4)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:4).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:4).format()
 	
-	cmds += buttoncmds(5, s5, sceneCap5, assocCap5, d5)
+	cmds += buttonCmds(5, s5, sceneCap5, assocCap5, d5)
 	cmds << zwave.associationV1.associationGet(groupingIdentifier:5).format()
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfGet(groupId:5).format()
 
 	// send commands
 	log.info "$cmds"
-	log.info "Please Wait this can take a few minutes"
+	log.info "Please Wait this can take a few minutes..."
 	delayBetween(cmds,3500)
 }
 
 
+//
 // Parse the user input and create commands to set up the controller -- called from config
-def buttoncmds(btn, scene, scenelist, assoclist, dimdur) { 
+//
+def buttonCmds(btn, scene, scenelist, assoclist, dimdur) { 
 	def cmds = []
 	def lList = 0
 	def alist = []
@@ -354,20 +394,20 @@ def buttoncmds(btn, scene, scenelist, assoclist, dimdur) {
 				thislevel[0] = thisset.level as int
 			}
 		}
-		cmds << AssocNodes(nodestring,btn,0)
+		cmds << assocNodes(nodestring,btn,0)
 		log.debug "setting configuration commands for button:$btn Level:$thislevel"        
 		cmds << zwave.configurationV1.configurationSet(parameterNumber:btn, size:1, configurationValue: thislevel).format()
 	}
 
 	cmds << zwave.sceneControllerConfV1.sceneControllerConfSet(groupId:btn, sceneId:scene, dimmingDuration:dimdur).format()
 	log.debug "setting scene commands for button:$btn scene:$scene dimmingduration:$dimdur"
-	cmds << AssocNodes(scenelist, btn, 1)
+	cmds << assocNodes(scenelist, btn, 1)
 
 	return (cmds)
 }
 
 
-def AssocNodes(txtlist,group,hub) {
+def assocNodes(txtlist,group,hub) {
 	def List1
 	def List3 = []
 	def cmd = ""
