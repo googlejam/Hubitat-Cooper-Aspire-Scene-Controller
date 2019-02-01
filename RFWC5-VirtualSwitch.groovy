@@ -52,7 +52,7 @@ def off() {
 def pushStateToKeypad() {
 	def parent = getParent()
 	if (parent) {
-		parent.syncIndicators()
+		parent.syncVirtualStateToIndicators()
 	}
 }
 
