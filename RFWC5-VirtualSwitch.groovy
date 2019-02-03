@@ -23,6 +23,21 @@ metadata {
 		
 		command "markOn"
 		command "markOff"
+		command "setButtonIndex"		
+		
+		attribute "buttonIndex", "int"
+	}
+	
+	preferences {
+		section {
+			input (
+				type: "bool",
+				name: "enableDebugLogging",
+				title: "Enable Debug Logging?",
+				required: true,
+				defaultValue: false
+			)
+		}
 	}
 }
 
@@ -31,20 +46,29 @@ def parse(String description) {
 }
 
 
+def log(msg) {
+	if (enableDebugLogging) {
+		log.debug msg	
+	}
+}
+
+
 def on() {
-	log.debug "${device.displayName}: on"
+	log "${device.displayName}: on"
 	
 	sendEvent(name: "switch", value: "on", isStateChange: true)
 	
+	// Delay one second because we might get multiple events in a short period.  Only send the last one.
 	runIn(1, pushStateToKeypad)
 }
 
 
 def off() {
-	log.debug "${device.displayName}: off"
+	log "${device.displayName}: off"
 	
     sendEvent(name: "switch", value: "off", isStateChange: true)
 	
+	// Delay one second because we might get multiple events in a short period.  Only send the last one.
 	runIn(1, pushStateToKeypad)
 }
 
@@ -57,15 +81,20 @@ def pushStateToKeypad() {
 }
 
 
-// Set the virtual switch on without firing any followup events.  Prevents cyclical firings.
+// Set the virtual switch on without sending state back to keypad.  Prevents cyclical firings.
 def markOn() {
 	sendEvent(name: "switch", value: "on")	
 }
 
 
-// Set the virtual switch off without firing any followup events.  Prevents cyclical firings.
+// Set the virtual switch off without sending state back to keypad.  Prevents cyclical firings.
 def markOff() {
 	sendEvent(name: "switch", value: "off")	
+}
+
+
+def setButtonIndex(newValue) {
+	sendEvent(name: "buttonIndex", value: newValue)	
 }
 
 
@@ -74,6 +103,7 @@ def installed() {
 	
 	sendEvent(name: "switch", value: "off", isStateChange: true)
 }
+
 
 def uninstalled() {
 	log.info "${device.displayName}: uninstalled"
