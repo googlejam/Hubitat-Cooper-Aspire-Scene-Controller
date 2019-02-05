@@ -28,6 +28,7 @@ metadata {
 		command "removeExistingChildDevices"
 		command "configureChildDevicesAsVirtualSwitches"
 		command "configureChildDevicesAsVirtualFanController"
+		command "configureChildDeviceAsVirtualButton"
         
         attribute "Indicators", "STRING"
 		attribute "VirtualDeviceMode", "STRING"
@@ -148,13 +149,18 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 			// short period of time.  We want the fan controller to only process the final one.
 			runIn(1, sendIndicatorValueToVirtualFanController)	
 		}
+		else if (currentMode == "virtualButton") {
+			// Delay processing one second because we could get multiple IndicatorReports back in a 
+			// short period of time.  We want the button controller to only process the final one.
+			runIn(1, sendIndicatorValueToVirtualButton)		
+		}
 	}
 		
 	return events
 }
 
 
-def sendIndicatorValueToVirtualFanController(indicators) {
+def sendIndicatorValueToVirtualFanController() {
 	// Tell the virtual fan controller what the new states are.
 	// It will compare this to its internal understanding, update itself
 	// and then make make the keypad sync again, so that we're not displaying
@@ -162,6 +168,20 @@ def sendIndicatorValueToVirtualFanController(indicators) {
 
 	def existingChildDevices = getChildDevices()
 	existingChildDevices[0].processIndicatorValue(device.currentValue("Indicators"))		// Virtual fan controller is the first child device
+}
+
+
+def sendIndicatorValueToVirtualButton() {
+	def virtualButton = getChildDevices()[0]
+	def indicators = device.currentValue("Indicators")
+	
+	for (i in 0..4) {
+		if (indicators[i] == "1") {
+			virtualButton.push(i+1)	
+		}
+	}
+	
+	syncVirtualStateToIndicators()
 }
 
 
@@ -232,6 +252,17 @@ def syncVirtualStateToIndicators() {
 		delayBetween([
 			zwave.indicatorV1.indicatorSet(value: newValue).format(),
 			zwave.indicatorV1.indicatorGet().format(),
+		], 300)
+	}
+	else if (currentMode == "virtualButton") {
+		state.buttonpush = 0	// upcoming indicatorGet command and IndicatorReport is from this API call, and not the result of a physical button press
+
+		// Don't change anything about "newValue"  We're sending zeros to turn the indicators off.
+		
+		log "${device.displayName}.syncVirtualStateToIndicators(${convertIndvalToReadable(newValue)})"
+		
+		delayBetween([
+			zwave.indicatorV1.indicatorSet(value: newValue).format()
 		], 300)
 	}
 }
@@ -366,6 +397,18 @@ def configureChildDevicesAsVirtualFanController() {
 	runIn(1, syncVirtualStateToIndicators)
 }
 
+
+def configureChildDeviceAsVirtualButton() {
+	removeExistingChildDevices()
+	
+	log.info "Adding child devices..."
+	
+	addChildDevice("hubitat", "Virtual Button", "${device.displayName}-Buttons", [completedSet: true, label: "${device.displayName} (Virtual Button)", isComponent: true, componentName: "ch5", componentLabel: "Keypad Virtual Button"])
+
+	sendEvent(name: "VirtualDeviceMode", value: "virtualButton", isStateChange: true)
+	
+	runIn(1, syncVirtualStateToIndicators)
+}
 
 //
 // This sets the Z-Wave configuration on the keypad device.
