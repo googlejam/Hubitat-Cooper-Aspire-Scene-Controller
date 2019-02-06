@@ -1,6 +1,6 @@
 # Cooper Eaton Aspire RFWC5 RFWC5D Keypad driver for Hubitat
 
-This is a Hubitat driver for the Cooper Eaton Aspire RFWC5 and RFWC5D 5-button keypads.  These are z-wave scene controllers, but this driver allows them to be used as keypads for a variety of purposes.
+This is a Hubitat driver for the Cooper Eaton Aspire RFWC5 and RFWC5D 5-button keypads.  These are in-wall z-wave scene controllers, but this driver allows them to be used as keypads for a variety of purposes.
 
 ## Supported Devices
 - **RFWC5** - This is the easiest to find.  It can easily be purchased online.  However, its design has wavy curves that you may or may not like.  https://www.amazon.com/Eaton-RFWC5AW-ASPIRE-5-Scene-120-volt/dp/B0053ZIRWK
