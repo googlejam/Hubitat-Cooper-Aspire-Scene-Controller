@@ -6,7 +6,7 @@ This is a Hubitat driver for the Cooper Eaton Aspire RFWC5 and RFWC5D 5-button k
 - **RFWC5** - This is the easiest to find.  It can easily be purchased online.  However, its design has wavy curves that you may or may not like.  https://www.amazon.com/Eaton-RFWC5AW-ASPIRE-5-Scene-120-volt/dp/B0053ZIRWK
 - **RFWC5D** - This is my favorite.  It's the Decorator Series model.  It looks rectangular and subtle, and matches Decora switches nicely.  However, it is difficult (but not impossible) to find or order without being an electrical contractor. http://www.cooperindustries.com/content/public/en/wiring_devices/products/lighting_controls/aspire_rf_wireless/aspire_rf_5_button_scene_control_keypad_rfwdc_rfwc5.html
 
-## Device Behavior
+## Physical Device Behavior
 The physical keypad has 5 main buttons with indicators.  Pressing a button causes its indicator to toggle, and a z-wave message is sent to the hub, which can then determine what all the indicator states are.
 
 There is also a 6th button.  If held for a few seconds, all the lights will flash and then every button will turn off.  This also sends a z-wave message to the hub, indicating that all buttons are off.
