@@ -16,7 +16,7 @@ There is also a 6th button.  If held for a few seconds, all the lights will flas
 ## Behavior Virtualization
 This is where the magic happens.  To a passer-by, the keypad looks and behaves like 5 toggle switches.  They are toggled by pressing the buttons, and the lights indicate if each of the switches is on.  *So we can use child virtual devices in the Hubitat hub to make it look like 5 switches to other apps and automations.*  It becomes easy to use Rule Machine, Switch Bindings, or other automation apps to drive behavior based on keypad presses.
 
-In fact, because the hub can also control the indicator states, we can give the keypad even more complex behaviors, and expose those behaviors as child virtual devices that match common capabilities.
+In fact, because the hub can also control the indicator states, we can give the keypad even more complex behaviors than just "5 switches", and expose those behaviors as child virtual devices that match common capabilities.
 
 Currently, this driver has 3 modes:
 1. Configure Children as Virtual Switches *(This creates 5 virtual switches as child devices.)*
