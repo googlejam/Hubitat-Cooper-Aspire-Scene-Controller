@@ -48,7 +48,33 @@ This is my main use case.  I have three smart lamps in my living room, and they 
 2. Click the command "Configure Child Devices As Virtual Switches"  It will take 3-5 seconds, and then you should see that the value of VirtualDeviceMode is "virtualSwitches".
 3. Refresh the page.
 4. Now if you scroll down, you should see 5 component devices.  They are virtual switches, and the driver will keep them exactly in sync with the lights on the keypad.  (It is a bi-directional sync too, which will be important in a moment.)
-5. Now, we want to make those virtual switches control real devices.  You could do this with Rule Machine, but my Switch Bindings app was made specially for doing this in a fast, simple, and reliable way.  If you haven't already, install the Switch Bindings app from here:  https://github.com/joelwetzel/Hubitat-Switch-Bindings
+5. Now, we want to make those virtual switches control some real devices.  You could do this with Rule Machine, but my Switch Bindings app was made specially for doing this in a fast, simple, and reliable way.  If you haven't already, install the Switch Bindings app from here:  https://github.com/joelwetzel/Hubitat-Switch-Bindings
 6. In Switch Bindings, create up to 5 bindings.  In each one, bind one virtual switch from the keypad to the real smart device you want it to control.  In my case, I bound each of the first three virtual switches to one of my smart lamps.
 
-Result:  You should now be able to press the buttons on the keypad to toggle your bound switches/lamps on and off.  Also, because Switch Bindings app is bi-directional, and the virtual switches are bi-directionally synced with the keypad indicators, if you use another means (such as Alexa or scheduled Scenes) to turn the lights on and off, the keypad indicators will stay in sync with what the devices are doing.
+Result:  You should now be able to press the buttons on the keypad to toggle your bound switches/lamps on and off.  Also, because Switch Bindings app is bi-directional, and the virtual switches are bi-directionally synced with the keypad indicators, if you use another means (such as Alexa or scheduled Scenes) to turn the lights on and off, the keypad indicators will stay in sync with what the devices are doing.  All the binding is fully bi-directional.
+
+## Installation Scenario 2 - Virtual Fan Controller and One Virtual Light Switch
+This is useful for 2 sub-scenarios:
+
+1. With the release of the Hampton Bay Zigbee Fan Controller (https://www.homedepot.com/p/Hampton-Bay-Universal-Wink-Enabled-White-Ceiling-Fan-Premier-Remote-Control-99432/206591100), there is now a smart device that control both a fan, as well as the light in the fan.  However, it just has its own remote.  What if you want to control it from a decora-style wall control?
+2. People have also done something similar by hiding a GE Fan Controller and GE Light Switch (or equivalent micro devices, such as the ones by AEOTEC) up in the fan shroud.
+
+In either of these cases, you end up with two devices in Hubitat:  A Fan Controller, and a Switch.  In Scenario 2, we are going to expose the functionality of the RFWC5 Keypad as a virtual fan controller and virtual switch, that can then be bound to the actual fan controller and switch.
+
+1. Open the Hubitat device page for the keypad.
+2. Click the command "Configure Child Devices as Virtual Fan Controller"  It will take 3-5 seconds, and then you should see that the value of VirtualDeviceMode is "virtualSwitches".
+3. Refresh the page.
+4. Now if you scroll down, you should see 2 component devices.  One is a virtual fan controller, and one is a virtual switch.
+5. Now, we want to make those virtual switches control the real devices.  You could do this with Rule Machine, but my Switch Bindings app was made specially for doing this in a fast, simple, and reliable way.  If you haven't already, install the Switch Bindings app from here:  https://github.com/joelwetzel/Hubitat-Switch-Bindings
+6. In Switch Bindings, create 2 bindings.  Bind the Virtual Fan Controller to the real fan controller.  Bind the Virtual Switch to the real light switch for the fan.
+
+Result:  The bottom button (button 5) on the keypad behaves as a switch for the fan light.  The next button up is Fan off.  Then buttons 3, 2, and 1 are Low, Medium, and High respectively.  You'll notice that only one of the fan lights will be on at a time.  Also, this binding is also bi-directional.  If you use Alexa or a scheduled routine to alter the fan light or the fan speed, these changes will be reflected in the keypad's indicator lights.
+
+## Installation Scenario 3 - Virtual Buttons
+Rather than exposing the keypad as 5 switches, this exposes it as 5 buttons.  The default state of the keypad will be to have all the lights turned off.  If you press buttons, the lights come on for just a second, and then turn off again, but virtual button presses happen in Hubitat.
+
+1. Open the Hubitat device page for the keypad.
+2. Click the command "Configure Child Devices as Virtual Button"  It will take 3-5 seconds, and then you should see that the value of VirtualDeviceMode is "virtualButton".
+3. Refresh the page.
+4. Now if you scroll down, you should see 1 component device - a Virtual Button.  (Hubitat allows more than one button inside a single "Virtual Button")
+5. Now I recommend using the built-in Button Controllers app in Hubitat.  You tell it to watch the Virtual Button, and then assign actions for when buttons 1-5 are pressed.  (Such as toggling lights or activating scenes.)
