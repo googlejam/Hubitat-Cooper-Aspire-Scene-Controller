@@ -38,7 +38,7 @@ The following steps should be followed, no matter which mode you are going to us
 11. Click the "Configure" command button.  This will send a bunch of configuration commands to the keypad.  It will take several minutes.  You can watch the progress by going to Hubitat's "Logs" page.
 12. When it is finished, you can do some minimal testing.  Press buttons on the keypad.  On the device page in Hubitat, in the "Current States" section, you should see the value of "Indicators" update to show which lights are turned on.  If this works, proceed to one of the next scenarios.
 
-## Installation Scenario 1 - Virtual Switches Bound to Other Lights and Switches
+## Configuration Scenario 1 - Virtual Switches Bound to Other Lights and Switches
 This is my main use case.  I have three smart lamps in my living room, and they didn't have switches on the wall.  I could control them through an app, or through Alexa, but visitors to the house didn't know what to do with them.  By installing an RFWC5D in the living room wall, there is now a simple and discoverable physical control for them.
 
 1. Open the Hubitat device page for the keypad.
@@ -50,7 +50,7 @@ This is my main use case.  I have three smart lamps in my living room, and they 
 
 Result:  You should now be able to press the buttons on the keypad to toggle your bound switches/lamps on and off.  Also, because Switch Bindings app is bi-directional, and the virtual switches are bi-directionally synced with the keypad indicators, if you use another means (such as Alexa or scheduled Scenes) to turn the lights on and off, the keypad indicators will stay in sync with what the devices are doing.  All the binding is fully bi-directional.
 
-## Installation Scenario 2 - Virtual Fan Controller and One Virtual Light Switch
+## Configuration Scenario 2 - Virtual Fan Controller and One Virtual Light Switch
 This is useful for 2 sub-scenarios:
 
 1. With the release of the Hampton Bay Zigbee Fan Controller (https://www.homedepot.com/p/Hampton-Bay-Universal-Wink-Enabled-White-Ceiling-Fan-Premier-Remote-Control-99432/206591100), there is now a smart device that control both a fan, as well as the light in the fan.  However, it just has its own remote.  What if you want to control it from a decora-style wall control?
@@ -67,7 +67,7 @@ In either of these cases, you end up with two devices in Hubitat:  A Fan Control
 
 Result:  The bottom button (button 5) on the keypad behaves as a switch for the fan light.  The next button up is Fan off.  Then buttons 3, 2, and 1 are Low, Medium, and High respectively.  You'll notice that only one of the fan lights will be on at a time.  Also, this binding is also bi-directional.  If you use Alexa or a scheduled routine to alter the fan light or the fan speed, these changes will be reflected in the keypad's indicator lights.
 
-## Installation Scenario 3 - Virtual Buttons
+## Configuration Scenario 3 - Virtual Buttons
 Rather than exposing the keypad as 5 switches, this exposes it as 5 buttons.  The default state of the keypad will be to have all the lights turned off.  If you press buttons, the lights come on for just a second, and then turn off again, but virtual button presses happen in Hubitat.
 
 1. Open the Hubitat device page for the keypad.
