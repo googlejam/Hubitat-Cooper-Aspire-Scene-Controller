@@ -20,7 +20,7 @@ In fact, because the hub can also control the indicator states, we can give the 
 
 Currently, this driver has 3 modes:
 1. Configure Children as Virtual Switches *(This creates 5 virtual switches as child devices.)*
-2. Configure Children as Virtual Fan Controller *(This creates a virtual fan controller and one virtual switch as child devices.  Then the keypad can be used to control a Hampton Bay Zigbee Fan Controller with Light, or control a GE Fan Controller and a GE Light Switch.)*
+2. Configure Children as Virtual Fan Controller *(This creates a virtual fan controller and one virtual switch as child devices.  Then the keypad can be used to control a Hampton Bay Zigbee Fan Controller with Light, or control a GE Fan Controller and a GE Light Switch, or other smart devices that implement the "Fan Control" and "Switch" capabilities.)*
 3. Configure Children as Virtual Button *(This creates a Virtual Button - with 5 buttons - as the child device.)*
 
 ## General Installation
