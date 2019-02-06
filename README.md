@@ -2,9 +2,6 @@
 
 This is a Hubitat driver for the Cooper Eaton Aspire RFWC5 and RFWC5D 5-button keypads.  These are z-wave scene controllers, but this driver allows them to be used as keypads for a variety of purposes.
 
-### Acknowledgments
-Many thanks to Scott Ainsworth for figuring out the z-wave configuration steps for the keypads.  I borrowed the configuration code from his original driver for SmartThings:  https://github.com/saains/SmartThingsPublic/blob/master/devicetypes/saains/cooper-aspire-scene-controller-rfwc5-rfwc5d.src/cooper-aspire-scene-controller-rfwc5-rfwc5d.groovy
-
 ## Supported Devices
 - **RFWC5** - This is the easiest to find.  It can easily be purchased online.  However, its design has wavy curves that you may or may not like.  https://www.amazon.com/Eaton-RFWC5AW-ASPIRE-5-Scene-120-volt/dp/B0053ZIRWK
 - **RFWC5D** - This is my favorite.  It's the Decorator Series model.  It looks rectangular and subtle, and matches Decora switches nicely.  However, it is difficult (but not impossible) to find or order without being an electrical contractor. http://www.cooperindustries.com/content/public/en/wiring_devices/products/lighting_controls/aspire_rf_wireless/aspire_rf_5_button_scene_control_keypad_rfwdc_rfwc5.html
@@ -78,3 +75,6 @@ Rather than exposing the keypad as 5 switches, this exposes it as 5 buttons.  Th
 3. Refresh the page.
 4. Now if you scroll down, you should see 1 component device - a Virtual Button.  (Hubitat allows more than one button inside a single "Virtual Button")
 5. Now I recommend using the built-in Button Controllers app in Hubitat.  You tell it to watch the Virtual Button, and then assign actions for when buttons 1-5 are pressed.  (Such as toggling lights or activating scenes.)
+
+### Acknowledgments
+Many thanks to Scott Ainsworth for figuring out the z-wave configuration steps for the keypads.  I borrowed the configuration code from his original driver for SmartThings:  https://github.com/saains/SmartThingsPublic/blob/master/devicetypes/saains/cooper-aspire-scene-controller-rfwc5-rfwc5d.src/cooper-aspire-scene-controller-rfwc5-rfwc5d.groovy
