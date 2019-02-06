@@ -56,7 +56,7 @@ This is useful for 2 sub-scenarios:
 1. With the release of the Hampton Bay Zigbee Fan Controller (https://www.homedepot.com/p/Hampton-Bay-Universal-Wink-Enabled-White-Ceiling-Fan-Premier-Remote-Control-99432/206591100), there is now a smart device that control both a fan, as well as the light in the fan.  However, it just has its own remote.  What if you want to control it from a decora-style wall control?
 2. People have also done something similar by hiding a GE Fan Controller and GE Light Switch (or equivalent micro devices, such as the ones by AEOTEC) up in the fan shroud.
 
-In either of these cases, you end up with two devices in Hubitat:  A Fan Controller, and a Switch.  In Scenario 2, we are going to expose the functionality of the RFWC5 Keypad as a virtual fan controller and virtual switch, that can then be bound to the actual fan controller and switch.
+In either of these cases, you end up with two smart devices in Hubitat that we want to control:  A Fan Controller, and a Switch.  In Scenario 2, we are going to expose the functionality of the RFWC5 Keypad as a virtual fan controller and virtual switch, that can then be bound to the actual fan controller and switch.
 
 1. Open the Hubitat device page for the keypad.
 2. Click the command "Configure Child Devices as Virtual Fan Controller"  It will take 3-5 seconds, and then you should see that the value of VirtualDeviceMode is "virtualSwitches".
