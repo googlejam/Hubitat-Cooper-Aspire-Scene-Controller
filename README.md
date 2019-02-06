@@ -7,7 +7,7 @@ Many thanks to Scott Ainsworth for figuring out the z-wave configuration steps f
 
 ## Supported Devices
 - **RFWC5** - This is the easiest to find.  It can easily be purchased online.  However, its design has wavy curves that you may or may not like.  https://www.amazon.com/Eaton-RFWC5AW-ASPIRE-5-Scene-120-volt/dp/B0053ZIRWK
-- **RFWC5D** - This is my favorite.  It's the Decorator Series model.  It looks rectangular and subtle, and matches Decora switches nicely.  However, it is difficult (but not impossible) to find without being an electrical contractor. http://www.cooperindustries.com/content/public/en/wiring_devices/products/lighting_controls/aspire_rf_wireless/aspire_rf_5_button_scene_control_keypad_rfwdc_rfwc5.html
+- **RFWC5D** - This is my favorite.  It's the Decorator Series model.  It looks rectangular and subtle, and matches Decora switches nicely.  However, it is difficult (but not impossible) to find or order without being an electrical contractor. http://www.cooperindustries.com/content/public/en/wiring_devices/products/lighting_controls/aspire_rf_wireless/aspire_rf_5_button_scene_control_keypad_rfwdc_rfwc5.html
 
 ## Device Behavior
 The physical keypad has 5 main buttons with indicators.  Pressing a button causes its indicator to toggle, and a z-wave message is sent to the hub, which can then determine what all the indicator states are.
@@ -16,8 +16,8 @@ There is also a 6th button.  If held for a few seconds, all the lights will flas
 
 (The keypad is also capable of being associated to other z-wave devices.  However, I do not find this useful, since then the hub is unaware of what is happening.  So my driver disables that, and all messages go through the hub.)
 
-## Virtualization
-This is where the magic happens.  To a passer-by, the keypad looks and behaves like 5 switches.  They are toggled by pressing the buttons, and the lights indicate if each of the switches is on.  *So we can use child virtual devices in the Hubitat hub to make it look like 5 switches.*  This makes it easy to use Rule Machine, Switch Bindings, or other automation apps to drive behavior based on keypad presses.
+## Device Virtualization
+This is where the magic happens.  To a passer-by, the keypad looks and behaves like 5 toggle switches.  They are toggled by pressing the buttons, and the lights indicate if each of the switches is on.  *So we can use child virtual devices in the Hubitat hub to make it look like 5 switches.*  This makes it easy to use Rule Machine, Switch Bindings, or other automation apps to drive behavior based on keypad presses.
 
 In fact, because the hub can also control the indicator states, we can give the keypad even more complex behaviors, and expose those behaviors as child virtual devices that match common capabilities.
 
@@ -39,3 +39,16 @@ The following steps should be followed, no matter which mode you are going to us
 9. On the device page in Hubitat, change the device's Type to "Cooper RFWC5 Keypad" and click "Save Device".
 10. Refresh the page.
 11. Click the "Configure" command button.  This will send a bunch of configuration commands to the keypad.  It will take several minutes.  You can watch the progress by going to Hubitat's "Logs" page.
+12. When it is finished, you can do some minimal testing.  Press buttons on the keypad.  On the device page in Hubitat, in the "Current States" section, you should see the value of "Indicators" update to show which lights are turned on.  If this works, proceed to one of the next scenarios.
+
+## Installation Scenario 1 - Virtual Switches Bound to Other Lights and Switches
+This is my main use case.  I have three smart lamps in my living room, and they didn't have switches on the wall.  I could control them through an app, or through Alexa, but visitors to the house didn't know what to do with them.  By installing an RFWC5D in the living room wall, there is now a simple and discoverable physical control for them.
+
+1. Open the Hubitat device page for the keypad.
+2. Click the command "Configure Child Devices As Virtual Switches"  It will take 3-5 seconds, and then you should see that the value of VirtualDeviceMode is "virtualSwitches".
+3. Refresh the page.
+4. Now if you scroll down, you should see 5 component devices.  They are virtual switches, and the driver will keep them exactly in sync with the lights on the keypad.  (It is a bi-directional sync too, which will be important in a moment.)
+5. Now, we want to make those virtual switches control real devices.  You could do this with Rule Machine, but my Switch Bindings app was made specially for doing this in a fast, simple, and reliable way.  If you haven't already, install the Switch Bindings app from here:  https://github.com/joelwetzel/Hubitat-Switch-Bindings
+6. In Switch Bindings, create up to 5 bindings.  In each one, bind one virtual switch from the keypad to the real smart device you want it to control.  In my case, I bound each of the first three virtual switches to one of my smart lamps.
+
+Result:  You should now be able to press the buttons on the keypad to toggle your bound switches/lamps on and off.  Also, because Switch Bindings app is bi-directional, and the virtual switches are bi-directionally synced with the keypad indicators, if you use another means (such as Alexa or scheduled Scenes) to turn the lights on and off, the keypad indicators will stay in sync with what the devices are doing.
