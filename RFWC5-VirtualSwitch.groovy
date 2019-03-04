@@ -23,7 +23,8 @@ metadata {
 		
 		command "markOn"
 		command "markOff"
-		command "setButtonIndex"		
+		command "setButtonIndex"	
+		command "processIndicatorValue"
 		
 		attribute "buttonIndex", "int"
 	}
@@ -80,6 +81,19 @@ def pushStateToKeypad() {
 	}
 }
 
+
+def processIndicatorValue(indicators) {
+	log "${device.displayName}.processIndicatorValue($indicators)"
+	
+	def switchState = (indicators[device.currentValue("buttonIndex").toInteger()] == "1")
+	
+	if (switchState) {
+		markOn()
+	}
+	else {
+		markOff()
+	}
+}
 
 // Set the virtual switch on without sending state back to keypad.  Prevents cyclical firings.
 def markOn() {
