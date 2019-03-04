@@ -58,6 +58,11 @@ def parse(String description) {
 	def result = null
 	
 	def cmd = zwave.parse(description)
+
+	//log.debug "DESCRIPTION: $description"
+	//log "CMD: $cmd"
+	//log "CLASSNAME: ${cmd.class.name}"
+	
 	if (cmd) {
 		result = zwaveEvent(cmd)
 		
@@ -65,8 +70,11 @@ def parse(String description) {
 			log "PARSED ${cmd} to: ${result.inspect()}"
 		}
 		else {
-			log "UNPARSED: ${cmd}"	
+			log.debug "UNPARSED CMD: ${cmd}"	
 		}
+	}
+	else {
+		log.debug "UNPARSED DESCRIPTION: ${description}"	
 	}
 	
 	result
@@ -94,10 +102,30 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
     def cmds = []
 
     state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
+
+	// This clause is a shortcut that only works if we're in virtualSwitches mode.
+	// The SceneActivationSet command has enough info to know which button was pushed,
+	// so we can turn on a virtual switch immediately, to reduce delay.  That won't 
+	// work in other modes.  Only in virtualSwitches mode.
+	if (device.currentValue("VirtualDeviceMode") == "virtualSwitches" && cmd.sceneId >= 251 && cmd.sceneId <= 255) {
+		getChildDevices()[cmd.sceneId - 251].markOn()
+		
+		runIn(1, requestIndicatorState)
+		return result
+	}
+
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
 
 	result
+}
+
+
+def requestIndicatorState() {
+	def cmds = []
+
+    cmds << response(zwave.indicatorV1.indicatorGet())
+    sendHubCommand(cmds)  
 }
 
  
@@ -108,6 +136,7 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
     def event = []
 	
     def indval = cmd.value
+	def payload = cmd.payload
 	
 	// Set the human-readable indicators attribute (mostly for debugging)
 	def indicators = convertIndvalToReadable(indval)
@@ -116,38 +145,12 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 
 	// Only propagate indicator values to the child devices if this IndicatorReport was the result of a physical button push.
 	if (state.buttonpush == 1) {
-		def existingChildDevices = getChildDevices()
 		def currentMode = device.currentValue("VirtualDeviceMode")
 		
-		if (currentMode == "virtualSwitches") {
-			// Go through each bit and tell the corresponding virtual switch what state it should be in.
-			for (i in 0..4) {
-				ibit = 2**i
-				onOff = indval & ibit
-
-				if (onOff) {
-					existingChildDevices[i].markOn()		// We use markOn() instead of on(), so that it doesn't cause cyclic event cascades.
-				}
-				else {
-					existingChildDevices[i].markOff()
-				}
-			}
-		}
-		else if (currentMode == "virtualFanController") {
-			// Find the bit for the light switch.  It's button 5.
-			ibit = 2**4
-			onOff = indval & ibit
-			
-			if (onOff) {
-				existingChildDevices[1].markOn()		// Virtual light switch is the second child device
-			}
-			else {
-				existingChildDevices[1].markOff()
-			}
-			
+		if (currentMode == "virtualFanController" || currentMode == "virtualSwitches") {
 			// Delay processing one second because we could get multiple IndicatorReports back in a 
 			// short period of time.  We want the fan controller to only process the final one.
-			runIn(1, sendIndicatorValueToVirtualFanController)	
+			runIn(1, sendIndicatorValueToChildDevices)	
 		}
 		else if (currentMode == "virtualButton") {
 			// Delay processing one second because we could get multiple IndicatorReports back in a 
@@ -160,14 +163,17 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 }
 
 
-def sendIndicatorValueToVirtualFanController() {
+def sendIndicatorValueToChildDevices() {
 	// Tell the virtual fan controller what the new states are.
 	// It will compare this to its internal understanding, update itself
 	// and then make make the keypad sync again, so that we're not displaying
 	// invalid combinations of lights.
 
 	def existingChildDevices = getChildDevices()
-	existingChildDevices[0].processIndicatorValue(device.currentValue("Indicators"))		// Virtual fan controller is the first child device
+	def childCount = existingChildDevices.size()
+	for (def i = 0; i < childCount; i++) {
+		existingChildDevices[i].processIndicatorValue(device.currentValue("Indicators"))
+	}
 }
 
 
@@ -372,7 +378,7 @@ def configureChildDevicesAsVirtualSwitches() {
 	// Let them know the number of the button they correspond to
 	def existingChildDevices = getChildDevices()
 	for (i in 0..4) {
-		existingChildDevices[i].setButtonIndex(i + 1)
+		existingChildDevices[i].setButtonIndex(i)
 	}
 	
 	sendEvent(name: "VirtualDeviceMode", value: "virtualSwitches", isStateChange: true)
@@ -389,8 +395,8 @@ def configureChildDevicesAsVirtualFanController() {
 	addChildDevice("joelwetzel", "Cooper RFWC5 Virtual Fan Controller", "${device.displayName}-FanController", [completedSet: true, label: "${device.displayName} (Fan Controller)", isComponent: true, componentName: "chFC", componentLabel: "Fan Controller"])
 	addChildDevice("joelwetzel", "Cooper RFWC5 Virtual Switch", "${device.displayName}-LightSwitch", [completedSet: true, label: "${device.displayName} (Light Switch)", isComponent: true, componentName: "ch5", componentLabel: "Light Switch"])
 
-	// Let the switch know the number of the button it corresponds to
-	def existingChildDevices = getChildDevices()[1].setButtonIndex(5)
+	// Let the switch know the index of the button it corresponds to
+	def existingChildDevices = getChildDevices()[1].setButtonIndex(4)
 
 	sendEvent(name: "VirtualDeviceMode", value: "virtualFanController", isStateChange: true)
 	
