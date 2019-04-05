@@ -80,6 +80,9 @@ def parse(String description) {
 	result
 }
 
+def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
+	// Do nothing.  This is here to prevent an error during z-wave repair.
+}
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
 	// Fired twice when a button is physically pushed off
