@@ -14,7 +14,8 @@
  *
  */
 
-
+import groovy.json.*
+	
 metadata {
 	definition (name: "Cooper RFWC5 Keypad", namespace: "joelwetzel", author: "Joel Wetzel") {
 		capability "Actuator"
@@ -115,7 +116,7 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 	// so we can turn on a virtual switch immediately, to reduce delay.  That won't 
 	// work in other modes.  Only in virtualSwitches mode.
 	if (device.currentValue("VirtualDeviceMode") == "virtualSwitches" && cmd.sceneId >= 251 && cmd.sceneId <= 255) {
-		getChildDevices()[cmd.sceneId - 251].markOn()
+		getChildDevicesInCreationOrder()[cmd.sceneId - 251].markOn()
 		
 		runIn(1, requestIndicatorState)
 		return result
@@ -176,7 +177,7 @@ def sendIndicatorValueToChildDevices() {
 	// and then make make the keypad sync again, so that we're not displaying
 	// invalid combinations of lights.
 
-	def existingChildDevices = getChildDevices()
+	def existingChildDevices = getChildDevicesInCreationOrder()
 	def childCount = existingChildDevices.size()
 	for (def i = 0; i < childCount; i++) {
 		existingChildDevices[i].processIndicatorValue(device.currentValue("Indicators"))
@@ -185,7 +186,7 @@ def sendIndicatorValueToChildDevices() {
 
 
 def sendIndicatorValueToVirtualButton() {
-	def virtualButton = getChildDevices()[0]
+	def virtualButton = getChildDevicesInCreationOrder()[0]
 	def indicators = device.currentValue("Indicators")
 	
 	for (i in 0..4) {
@@ -208,7 +209,7 @@ def sendIndicatorValueToVirtualButton() {
 //
 def syncVirtualStateToIndicators() {
 
-	def existingChildDevices = getChildDevices()
+	def existingChildDevices = getChildDevicesInCreationOrder()
 	def currentMode = device.currentValue("VirtualDeviceMode")
 
 	def newValue = 0	
@@ -383,7 +384,7 @@ def configureChildDevicesAsVirtualSwitches() {
 	}
 	
 	// Let them know the number of the button they correspond to
-	def existingChildDevices = getChildDevices()
+	def existingChildDevices = getChildDevicesInCreationOrder()
 	for (i in 0..4) {
 		existingChildDevices[i].setButtonIndex(i)
 	}
@@ -403,7 +404,7 @@ def configureChildDevicesAsVirtualFanController() {
 	addChildDevice("joelwetzel", "Cooper RFWC5 Virtual Switch", "${device.displayName}-LightSwitch", [completedSet: true, label: "${device.displayName} (Light Switch)", isComponent: true, componentName: "ch5", componentLabel: "Light Switch"])
 
 	// Let the switch know the index of the button it corresponds to
-	def existingChildDevices = getChildDevices()[1].setButtonIndex(4)
+	def existingChildDevices = getChildDevicesInCreationOrder()[1].setButtonIndex(4)
 
 	sendEvent(name: "VirtualDeviceMode", value: "virtualFanController", isStateChange: true)
 	
@@ -578,6 +579,16 @@ def assocNodes(txtlist,group,hub) {
 
 	return (cmd)
 }
+
+
+def getChildDevicesInCreationOrder() {
+	def unorderedChildDevices = getChildDevices()
+	
+	def orderedChildDevices = unorderedChildDevices.sort{a,b -> a.device.id <=> b.device.id}
+	
+	return orderedChildDevices
+}
+
 
 
 
