@@ -65,6 +65,23 @@ def parse(String description) {
 	//log "CLASSNAME: ${cmd.class.name}"
 	
 	if (cmd) {
+        // Simplification figured out by tchandle.
+        // We were getting duplicate calls of the SceneActivationSet command.
+        // The duplicates had isMulticase=true, so we can ignore those.
+        if ("$cmd".toLowerCase().indexOf("sceneactivationset") >= 0) {
+            if ("$description".toLowerCase().indexOf("ismulticast: true") >= 0) {
+                log "Ignore Duplicate SceneActivationSet (isMultiCast: true)"
+                return []
+            }
+        }
+        if ("$cmd".toLowerCase().indexOf("basicset") >= 0) {
+            if ("$description".toLowerCase().indexOf("ismulticast: true") >= 0) {
+                log "Ignore Duplicate BasicSet (isMultiCast: true)"
+                return []
+            }
+        }
+
+        
 		result = zwaveEvent(cmd)
 		
 		if (result != null && result.inspect() != null) {
@@ -111,16 +128,24 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 
     state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
 
-	// This clause is a shortcut that only works if we're in virtualSwitches mode.
-	// The SceneActivationSet command has enough info to know which button was pushed,
-	// so we can turn on a virtual switch immediately, to reduce delay.  That won't 
-	// work in other modes.  Only in virtualSwitches mode.
 	if (device.currentValue("VirtualDeviceMode") == "virtualSwitches" && cmd.sceneId >= 251 && cmd.sceneId <= 255) {
-		getChildDevicesInCreationOrder()[cmd.sceneId - 251].markOn()
+    	// This clause is a shortcut that only works if we're in virtualSwitches mode.
+	    // The SceneActivationSet command has enough info to know which button was pushed,
+	    // so we can turn on a virtual switch immediately, to reduce delay.
+        getChildDevicesInCreationOrder()[cmd.sceneId - 251].markOn()
 		
 		runIn(1, requestIndicatorState)
 		return result
 	}
+    else if (device.currentValue("VirtualDeviceMode") == "virtualButton" && cmd.sceneId >= 251 && cmd.sceneId <= 255) {
+        // This is a shortcut that works if we're in virtualButton mode.
+        // We have enough info to know which button was pushed, so we can skip the indicatorGet.
+        def buttonId = cmd.sceneId - 250    // buttons are defined as sceneIDs 251-255
+        def virtualButton = getChildDevicesInCreationOrder()[0]
+        virtualButton.push(buttonId)
+        runIn(1, syncVirtualStateToIndicators)    // Reset the lights on the keypad.
+        return result
+    }
 
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
@@ -160,11 +185,6 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 			// short period of time.  We want the fan controller to only process the final one.
 			runIn(1, sendIndicatorValueToChildDevices)	
 		}
-		else if (currentMode == "virtualButton") {
-			// Delay processing one second because we could get multiple IndicatorReports back in a 
-			// short period of time.  We want the button controller to only process the final one.
-			runIn(1, sendIndicatorValueToVirtualButton)		
-		}
 	}
 		
 	return events
@@ -172,7 +192,7 @@ def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
 
 
 def sendIndicatorValueToChildDevices() {
-	// Tell the virtual fan controller what the new states are.
+	// Tell the virtual child device what the new states are.
 	// It will compare this to its internal understanding, update itself
 	// and then make make the keypad sync again, so that we're not displaying
 	// invalid combinations of lights.
@@ -185,27 +205,13 @@ def sendIndicatorValueToChildDevices() {
 }
 
 
-def sendIndicatorValueToVirtualButton() {
-	def virtualButton = getChildDevicesInCreationOrder()[0]
-	def indicators = device.currentValue("Indicators")
-	
-	for (i in 0..4) {
-		if (indicators[i] == "1") {
-			virtualButton.push(i+1)	
-		}
-	}
-	
-	syncVirtualStateToIndicators()
-}
-
-
 // *******************************************************
 // *******************  PUBLIC API ***********************
 // *******************************************************
 
 
 //
-// Make the keypad's indicators match the states of the virtual child devices.
+// Make the keypad's indicators match the final states of the virtual child devices.
 //
 def syncVirtualStateToIndicators() {
 
