@@ -58,9 +58,9 @@ metadata {
 def parse(String description) {
 	def result = null
 	
-	def cmd = zwave.parse(description)
+	def cmd = zwave.parse(description, [0x87:1])
 
-	//log.debug "DESCRIPTION: $description"
+    //log.debug "DESCRIPTION: $description"
 	//log "CMD: $cmd"
 	//log "CLASSNAME: ${cmd.class.name}"
 	
@@ -81,7 +81,6 @@ def parse(String description) {
             }
         }
 
-        
 		result = zwaveEvent(cmd)
 		
 		if (result != null && result.inspect() != null) {
@@ -214,7 +213,6 @@ def sendIndicatorValueToChildDevices() {
 // Make the keypad's indicators match the final states of the virtual child devices.
 //
 def syncVirtualStateToIndicators() {
-
 	def existingChildDevices = getChildDevicesInCreationOrder()
 	def currentMode = device.currentValue("VirtualDeviceMode")
 
