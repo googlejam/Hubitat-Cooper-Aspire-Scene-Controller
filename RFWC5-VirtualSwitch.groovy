@@ -1,5 +1,5 @@
 /**
- *  Cooper RFWC5 Virtual Switch
+ *  Cooper RFWC5 Virtual Switch v1.0
  *
  *  Copyright 2019 Joel Wetzel
  *
@@ -122,4 +122,3 @@ def installed() {
 def uninstalled() {
 	log.info "${device.displayName}: uninstalled"
 }
-
