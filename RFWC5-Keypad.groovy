@@ -1,5 +1,5 @@
 /**
- *  Cooper RFWC5 Keypad
+ *  Cooper RFWC5 Keypad v1.0
  *
  *  Copyright 2019 Joel Wetzel
  *
@@ -46,6 +46,13 @@ metadata {
 				required: true,
 				defaultValue: true
 			)
+            input (
+				type: "number",
+				name: "sceneIndex",
+				title: "Scene Starting Index",
+				required: true,
+				defaultValue: 251
+			)
 		}
 	}
 }
@@ -55,14 +62,17 @@ metadata {
 // *******************  Z-WAVE CODE **********************
 // *******************************************************
 
+
 def parse(String description) {
 	def result = null
+    
+    //log.debug "parse: ${description}"
 	
-	def cmd = zwave.parse(description, [0x87:1])
+	def cmd = zwave.parse(description, [0x87:1, 0x20:2])
 
     //log.debug "DESCRIPTION: $description"
-	//log "CMD: $cmd"
-	//log "CLASSNAME: ${cmd.class.name}"
+	log "CMD: $cmd"
+	log "CLASSNAME: ${cmd.class.name}"
 	
 	if (cmd) {
         // Simplification figured out by tchandle.
@@ -101,6 +111,14 @@ def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
 	// Do nothing.  This is here to prevent an error during z-wave repair.
 }
 
+def zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelStartLevelChange cmd) {
+	// Do nothing.
+}
+
+def zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelStopLevelChange cmd) {
+	// Do nothing.
+}
+
 def zwaveEvent(hubitat.zwave.commands.scenecontrollerconfv1.SceneControllerConfReport cmd) {
 	// Do nothing.  This is here to prevent an error during configuration.
 }
@@ -111,41 +129,53 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     def result = []
     def cmds = []
 	
+    //log.debug "sending an indicatorGet"
 	state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
 	
     result
 }
+
+
+def zwaveEvent(hubitat.zwave.commands.basicv2.BasicReport cmd) {
+    //log.debug "#################### BasicReport Received: ${cmd}"
+}
     
     
 def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
 	// Fired twice when a button is physically pushed on
+    
+    //log.debug "zwaveEvent.SceneActivationSet: ${cmd.sceneId - sceneIndex}"
 	
     def result = []
     def cmds = []
 
     state.buttonpush = 1	// Upcoming IndicatorReport is the result of a button push
 
-	if (device.currentValue("VirtualDeviceMode") == "virtualSwitches" && cmd.sceneId >= 251 && cmd.sceneId <= 255) {
+	if (device.currentValue("VirtualDeviceMode") == "virtualSwitches" && cmd.sceneId >= sceneIndex && cmd.sceneId <= sceneIndex + 4) {
+        //log.debug "shortcut"
     	// This clause is a shortcut that only works if we're in virtualSwitches mode.
 	    // The SceneActivationSet command has enough info to know which button was pushed,
 	    // so we can turn on a virtual switch immediately, to reduce delay.
-        getChildDevicesInCreationOrder()[cmd.sceneId - 251].markOn()
+        def child = getChildDevicesInCreationOrder()[(short)(cmd.sceneId - sceneIndex)]
+        //log.debug child
+        child.markOn()
 		
 		runIn(1, requestIndicatorState)
 		return result
 	}
-    else if (device.currentValue("VirtualDeviceMode") == "virtualButton" && cmd.sceneId >= 251 && cmd.sceneId <= 255) {
+    else if (device.currentValue("VirtualDeviceMode") == "virtualButton" && cmd.sceneId >= sceneIndex && cmd.sceneId <= sceneIndex + 4) {
         // This is a shortcut that works if we're in virtualButton mode.
         // We have enough info to know which button was pushed, so we can skip the indicatorGet.
-        def buttonId = cmd.sceneId - 250    // buttons are defined as sceneIDs 251-255
+        def buttonId = cmd.sceneId - sceneIndex + 1    // buttons are defined as sceneIDs 251-255
         def virtualButton = getChildDevicesInCreationOrder()[0]
         virtualButton.push(buttonId)
         runIn(1, syncVirtualStateToIndicators)    // Reset the lights on the keypad.
         return result
     }
 
+    //log.debug "sending an indicatorGet"
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
 
@@ -156,12 +186,48 @@ def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) 
 def requestIndicatorState() {
 	def cmds = []
 
+    //log.debug "requestIndicatorState()"
+    
+    //log.debug "sending an indicatorGet"
     cmds << response(zwave.indicatorV1.indicatorGet())
     sendHubCommand(cmds)  
 }
 
  
 def zwaveEvent(hubitat.zwave.commands.indicatorv1.IndicatorReport cmd) {
+    //log.debug "IndicatorReport"
+    
+	def ibit = 0
+	def onOff = 0
+	def events = []
+    def event = []
+	
+    def indval = cmd.value
+	def payload = cmd.payload
+	
+	// Set the human-readable indicators attribute (mostly for debugging)
+	def indicators = convertIndvalToReadable(indval)
+	event = createEvent(name: "Indicators", value: "$indicators", descriptionText: "Indicators: $indicators", linkText: "Indicators: $indicators")
+	events << event
+
+	// Only propagate indicator values to the child devices if this IndicatorReport was the result of a physical button push.
+	if (state.buttonpush == 1) {
+		def currentMode = device.currentValue("VirtualDeviceMode")
+		
+		if (currentMode == "virtualFanController" || currentMode == "virtualSwitches") {
+			// Delay processing one second because we could get multiple IndicatorReports back in a 
+			// short period of time.  We want the fan controller to only process the final one.
+			runIn(1, sendIndicatorValueToChildDevices)	
+		}
+	}
+		
+	return events
+}
+
+
+def zwaveEvent(hubitat.zwave.commands.indicatorv2.IndicatorReport cmd) {
+    //log.debug "IndicatorReport v2"
+    
 	def ibit = 0
 	def onOff = 0
 	def events = []
@@ -213,6 +279,8 @@ def sendIndicatorValueToChildDevices() {
 // Make the keypad's indicators match the final states of the virtual child devices.
 //
 def syncVirtualStateToIndicators() {
+    //log.debug "syncVirtualStateToIndicators"
+    
 	def existingChildDevices = getChildDevicesInCreationOrder()
 	def currentMode = device.currentValue("VirtualDeviceMode")
 
@@ -232,6 +300,7 @@ def syncVirtualStateToIndicators() {
 
 		log "${device.displayName}.syncVirtualStateToIndicators(${convertIndvalToReadable(newValue)})"
 
+        //log.debug "sending an indicatorGet"
 		delayBetween([
 			zwave.indicatorV1.indicatorSet(value: newValue).format(),
 			zwave.indicatorV1.indicatorGet().format(),
@@ -267,6 +336,7 @@ def syncVirtualStateToIndicators() {
 
 		log "${device.displayName}.syncVirtualStateToIndicators(${convertIndvalToReadable(newValue)})"
 		
+        //log.debug "sending an indicatorGet"
 		delayBetween([
 			zwave.indicatorV1.indicatorSet(value: newValue).format(),
 			zwave.indicatorV1.indicatorGet().format(),
@@ -296,6 +366,7 @@ def refresh() {
 	// virtual child devices, as if a physical button press had happened.
 	state.buttonpush = 1
 	
+    //log.debug "sending an indicatorGet"
 	delayBetween([
 		zwave.indicatorV1.indicatorGet().format(),
     ], 100)    
@@ -437,11 +508,11 @@ def configure() {
     def cmds = []
     
     //the buttons on the controller will not work with out a scene load in.  Use 251-255 if no scene number is specified in the preferences
-    def s1 = 251
-    def s2 = 252
-    def s3 = 253
-    def s4 = 254
-    def s5 = 255
+    def s1 = sceneIndex
+    def s2 = sceneIndex + 1
+    def s3 = sceneIndex + 2
+    def s4 = sceneIndex + 3
+    def s5 = sceneIndex + 4
     
     if (sceneNum1) s1 = sceneNum1
     if (sceneNum2) s2 = sceneNum2
@@ -592,7 +663,4 @@ def getChildDevicesInCreationOrder() {
 	
 	return orderedChildDevices
 }
-
-
-
 
