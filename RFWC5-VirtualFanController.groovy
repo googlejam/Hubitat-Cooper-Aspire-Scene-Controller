@@ -1,5 +1,5 @@
 /**
- *  Cooper RFWC5 Virtual Fan Controller
+ *  Cooper RFWC5 Virtual Fan Controller v1.0
  *
  *  Copyright 2019 Joel Wetzel
  *
@@ -322,5 +322,3 @@ def initialize() {
 	sendEvent(name: "speed", value: "off", isStateChange: true)
 	sendEvent(name: "lastSpeed", value: "off", isStateChange: true)
 }
-
-
