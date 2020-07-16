@@ -1,0 +1,32 @@
+{
+	"packageName": "Cooper Aspire RFWC5 Scene Controller Driver",
+	"minimumHEVersion": "2.2.1",
+	"author": "Joel Wetzel",
+	"version": "1.0",
+	"dateReleased": "2020-07-14",
+	"licenseFile": "https://raw.githubusercontent.com/joelwetzel/Hubitat-Auto-Shades/master/LICENSE",
+	"releaseNotes": "Initial release through Hubitat Package Manager.",
+  "drivers" : [
+		{
+			"id": "471ab9f1-d980-42e6-bc35-48b8b2b58766",
+			"name": "Cooper RFWC5 Keypad",
+			"namespace": "joelwetzel",
+			"location": "https://raw.githubusercontent.com/joelwetzel/Hubitat-Cooper-Aspire-Scene-Controller/master/RFWC5-Keypad.groovy",
+			"required": true
+		},
+    {
+			"id": "4e2b606e-603b-4fc9-b98f-15d6933a0b92",
+			"name": "Cooper RFWC5 Virtual Fan Controller",
+			"namespace": "joelwetzel",
+			"location": "https://raw.githubusercontent.com/joelwetzel/Hubitat-Cooper-Aspire-Scene-Controller/master/RFWC5-VirtualFanController.groovy",
+			"required": true
+		},
+    {
+			"id": "c291941a-5730-447e-883b-1fce5bc115b8",
+			"name": "Cooper RFWC5 Virtual Switch",
+			"namespace": "joelwetzel",
+			"location": "https://raw.githubusercontent.com/joelwetzel/Hubitat-Cooper-Aspire-Scene-Controller/master/RFWC5-VirtualSwitch.groovy",
+			"required": true
+		}
+	]
+}
