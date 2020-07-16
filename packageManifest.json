@@ -6,7 +6,8 @@
 	"dateReleased": "2020-07-14",
 	"licenseFile": "https://raw.githubusercontent.com/joelwetzel/Hubitat-Auto-Shades/master/LICENSE",
 	"releaseNotes": "Initial release through Hubitat Package Manager.",
-  "drivers" : [
+	"communityLink": "https://community.hubitat.com/t/release-cooper-eaton-aspire-rfwc5-keypad-driver-for-hubitat",
+	"drivers" : [
 		{
 			"id": "471ab9f1-d980-42e6-bc35-48b8b2b58766",
 			"name": "Cooper RFWC5 Keypad",
