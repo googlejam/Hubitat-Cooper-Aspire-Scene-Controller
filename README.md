@@ -25,6 +25,9 @@ Currently, this driver has 3 modes:
 
 ## General Installation
 The following steps should be followed, no matter which mode you are going to use.
+
+(UPDATE: The best way to install this code is by using [Hubitat Package Manager](https://community.hubitat.com/t/beta-hubitat-package-manager).  If you install it using Package Manager, you can skip down to step 6.)
+
 1. On the Hubitat hub, go to the "Drivers Code" page
 2. Click "+New Driver"
 3. Copy in the code from RFWC5-Keypad.groovy
