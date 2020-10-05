@@ -38,7 +38,7 @@ The following steps should be followed, no matter which mode you are going to us
 8. Join the keypad to your z-wave network.  On the "Devices" page of Hubitat, click the Discover button, then press the ALL OFF button on the keypad.
 9. On the device page in Hubitat, change the device's Type to "Cooper RFWC5 Keypad" and click "Save Device".
 10. Refresh the page.
-11. Click the "Configure" command button.  This will send a bunch of configuration commands to the keypad.  It will take several minutes.  You can watch the progress by going to Hubitat's "Logs" page.
+11. Click the "Save Preferences" button and then click the "Configure" command button.  This will send a bunch of configuration commands to the keypad.  It will take several minutes.  You can watch the progress by going to Hubitat's "Logs" page.
 12. When it is finished, you can do some minimal testing.  Press buttons on the keypad.  On the device page in Hubitat, in the "Current States" section, you should see the value of "Indicators" update to show which lights are turned on.  If this works, proceed to one of the next scenarios.
 
 ## Configuration Scenario 1 - Virtual Switches Bound to Other Lights and Switches
